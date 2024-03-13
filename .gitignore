@@ -1,4 +1,5 @@
 /target
 
-# generated Verilog
+# generated Python and Verilog Verilog
 *.v
+*.py
