@@ -1,1 +1,4 @@
 /target
+
+# generated Verilog
+*.v

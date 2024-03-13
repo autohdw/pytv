@@ -1,3 +1,9 @@
+use pytv::Convert;
+
 fn main() {
-    println!("Hello, world!");
+    let convert = Convert::from_args();
+    println!("{:#?}", convert);
+    convert
+        .convert()
+        .unwrap_or_else(|err| eprintln!("Error: {}", err));
 }
