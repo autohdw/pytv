@@ -3,3 +3,6 @@
 # generated Python and Verilog Verilog
 *.v
 *.py
+
+# macOS
+.DS_Store
