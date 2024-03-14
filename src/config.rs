@@ -17,7 +17,7 @@ pub struct Config {
 }
 
 /// Represents the options for input and output file for PYTV.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct FileOptions {
     /// The input file path.
     pub input: String,

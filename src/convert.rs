@@ -7,7 +7,7 @@ use std::path;
 ///
 /// It is also possible to run the Python script after conversion and optionally delete it after running it.
 /// It contains methods for converting code and managing input/output files.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Convert {
     config: Config,
     file_options: FileOptions,
@@ -120,5 +120,44 @@ impl Convert {
     pub fn convert_to_file(&self) -> Result<()> {
         let out_f = self.open_output()?;
         self.convert(out_f)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pre_process_line() {
+        let convert = Convert::default();
+        dbg!(convert.config.tab_size);
+        assert_eq!(convert.pre_process_line("hello\they"), "hello    hey");
+    }
+
+    #[test]
+    fn test_escape_verilog() {
+        let convert = Convert::default();
+        assert_eq!(convert.escape_verilog("hello'world"), "hello\\'world");
+        assert_eq!(convert.escape_verilog("string {foo}"), "string {{foo}}");
+        assert_eq!(convert.escape_verilog("string {{bar}}"), "string {{{{bar}}}}");
+        assert_eq!(convert.escape_verilog("\"em"), "\"em");
+    }
+
+    #[test]
+    fn test_apply_verilog_regex() {
+        let convert = Convert::default();
+        assert_eq!(convert.apply_verilog_regex("hello `world`"), "hello {world}");
+        assert_eq!(convert.apply_verilog_regex("hello `world` `bar`"), "hello {world} {bar}");
+        assert_eq!(convert.apply_verilog_regex("`timescale 1ns / 1ps"), "`timescale 1ns / 1ps");
+    }
+
+    #[test]
+    fn test_if_py_line() {
+        let convert = Convert::default();
+        assert!(convert.if_py_line("//! a = 1"));
+        assert!(convert.if_py_line("//!a = 1"));
+        assert!(convert.if_py_line("    //!  a = 1"));
+        assert!(!convert.if_py_line("// a = 1"));
+        assert!(!convert.if_py_line("a = 1"));
     }
 }
