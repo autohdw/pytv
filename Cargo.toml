@@ -8,7 +8,7 @@ readme = "README.md"
 license = "GPL-3.0-or-later"
 keywords = ["verilog", "python", "template", "generation"]
 categories = ["template-engine", "compilers", "development-tools"]
-exclude = ["examples/*", "target/*", "Cargo.lock", ".vscode/*", ".DS_Store"]
+exclude = ["examples/*", "target/*", "Cargo.lock", ".github/*", ".vscode/*", ".DS_Store"]
 edition = "2021"
 
 [dependencies]
