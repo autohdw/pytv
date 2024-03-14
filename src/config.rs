@@ -99,6 +99,6 @@ impl Config {
     }
 
     fn default_template_re() -> Regex {
-        Regex::new(r"`(\w+)`").unwrap()
+        Regex::new(r"`([^`]+)`").unwrap()
     }
 }

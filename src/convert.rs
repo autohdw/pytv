@@ -48,16 +48,38 @@ impl Convert {
         })
     }
 
-    pub fn if_py_line(&self, line: &str) -> bool {
+    fn if_py_line(&self, line: &str) -> bool {
         line.trim_start()
             .starts_with(&format!("//{}", self.config.magic_comment_str))
     }
 
-    pub fn pre_process_line(&self, line: &str) -> String {
+    fn pre_process_line(&self, line: &str) -> String {
         line.trim_end().replace(
             "\t",
             str::repeat(" ", self.config.tab_size as usize).as_str(),
         )
+    }
+
+    fn escape_verilog(&self, line: &str) -> String {
+        let mut escaped_line = String::with_capacity(line.len());
+        for c in line.chars() {
+            match c {
+                '\'' => escaped_line.push_str("\\'"), // we use single quote for print
+                '{' => escaped_line.push_str("{{"),
+                '}' => escaped_line.push_str("}}"),
+                _ => escaped_line.push(c),
+            }
+        }
+        escaped_line
+    }
+
+    fn apply_verilog_regex(&self, line: &str) -> String {
+        // self.config.template_re
+        // regex replace
+        self.config
+            .template_re
+            .replace_all(line, format!("{{$1}}").as_str())
+            .to_string()
     }
 
     pub fn convert(&self) -> Result<(), Box<dyn Error>> {
@@ -76,8 +98,8 @@ impl Convert {
                 }
                 writeln!(out_f, "{}", utf8_slice::from(&line, py_indent_space))?;
             } else {
-                // TODO: apply template regex
-                writeln!(out_f, "{}", line)?;
+                let line = self.apply_verilog_regex(self.escape_verilog(&line).as_str());
+                writeln!(out_f, "print(f'{line}')")?;
             }
         }
         Ok(())

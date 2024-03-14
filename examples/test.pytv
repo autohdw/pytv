@@ -1,4 +1,7 @@
+# `timescale 1ns / 1ps
 # Do nothing here!
 //! for i in range(5):
 //!     print("Teddy bear!")
-  # Do nothing here either!
+# Do nothing here either! { some content }
+//! a = 2
+# `1 + 2` and how about here ` a * 2 `
