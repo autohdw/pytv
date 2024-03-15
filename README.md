@@ -10,7 +10,7 @@ To use the package, run
 cargo add pytv
 ```
 
-# Related Auto Generator Projects
+## Related Auto Generator Projects
 - **FLAMES**: template-based C++ library for Vitis HLS
   [[website](https://flames.autohdw.com)]
   [[GitHub](https://github.com/autohdw/flames)]

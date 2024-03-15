@@ -33,10 +33,10 @@ impl Convert {
         std::fs::read_to_string(&self.file_options.input)
     }
 
-    /// Opens the output file and returns a file handle.
+    /// Opens the output Python file and returns a file handle.
     /// Note: This will overwrite the existing file.
     fn open_output(&self) -> Result<std::fs::File> {
-        std::fs::File::create(&self.output_file_name())
+        std::fs::File::create(&self.output_python_file_name())
     }
 
     /// Generates the output file name based on the input file name and configuration.
@@ -49,12 +49,17 @@ impl Convert {
             // change extension to .v if there is extension
             let ext = path::Path::new(&output).extension().unwrap_or_default();
             if ext.is_empty() {
-                output.push_str(".v.py");
+                output.push_str(".v");
             } else {
-                output = output.replace(ext.to_str().unwrap(), "v.py");
+                output = output.replace(ext.to_str().unwrap(), "v");
             }
             output
         })
+    }
+
+    /// Generates the output Python file name based on the input file name and configuration.
+    fn output_python_file_name(&self) -> String {
+        self.output_file_name() + ".py"
     }
 
     /// Checks if a line of code is a Python line based on the magic comment string in the configuration.
@@ -93,6 +98,35 @@ impl Convert {
             .to_string()
     }
 
+    /// Runs the Python code to generate verilog.
+    ///
+    /// The command `python3` should be available to call.
+    fn run_python(&self) -> Result<()> {
+        let py_file = self.output_python_file_name();
+        let v_file = self.output_file_name();
+        let v_file_f = std::fs::File::create(&v_file)?;
+        let output = std::process::Command::new("python3")
+            .arg(&py_file)
+            .stdout(v_file_f)
+            .output()?;
+        dbg!(&output);
+        if !output.status.success() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!(
+                    "Python script failed with exit code: {}\n{}",
+                    output.status.code().unwrap_or(-1),
+                    String::from_utf8_lossy(&output.stderr)
+                ),
+            ));
+        } else {
+            if self.config.delete_python {
+                std::fs::remove_file(&py_file)?;
+            }
+        }
+        Ok(())
+    }
+
     /// Converts the code and writes the converted code to the given stream.
     pub fn convert<W: Write>(&self, mut stream: W) -> Result<()> {
         let mut first_py_line = false;
@@ -117,9 +151,15 @@ impl Convert {
     }
 
     /// Converts the code and writes the converted code to a file.
+    ///
+    /// With default `Config`, the output will be a Python file.
     pub fn convert_to_file(&self) -> Result<()> {
         let out_f = self.open_output()?;
-        self.convert(out_f)
+        self.convert(out_f)?;
+        if self.config.run_python {
+            self.run_python()?;
+        }
+        Ok(())
     }
 }
 
@@ -139,16 +179,28 @@ mod tests {
         let convert = Convert::default();
         assert_eq!(convert.escape_verilog("hello'world"), "hello\\'world");
         assert_eq!(convert.escape_verilog("string {foo}"), "string {{foo}}");
-        assert_eq!(convert.escape_verilog("string {{bar}}"), "string {{{{bar}}}}");
+        assert_eq!(
+            convert.escape_verilog("string {{bar}}"),
+            "string {{{{bar}}}}"
+        );
         assert_eq!(convert.escape_verilog("\"em"), "\"em");
     }
 
     #[test]
     fn test_apply_verilog_regex() {
         let convert = Convert::default();
-        assert_eq!(convert.apply_verilog_regex("hello `world`"), "hello {world}");
-        assert_eq!(convert.apply_verilog_regex("hello `world` `bar`"), "hello {world} {bar}");
-        assert_eq!(convert.apply_verilog_regex("`timescale 1ns / 1ps"), "`timescale 1ns / 1ps");
+        assert_eq!(
+            convert.apply_verilog_regex("hello `world`"),
+            "hello {world}"
+        );
+        assert_eq!(
+            convert.apply_verilog_regex("hello `world` `bar`"),
+            "hello {world} {bar}"
+        );
+        assert_eq!(
+            convert.apply_verilog_regex("`timescale 1ns / 1ps"),
+            "`timescale 1ns / 1ps"
+        );
     }
 
     #[test]

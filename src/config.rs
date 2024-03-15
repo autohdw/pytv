@@ -74,6 +74,15 @@ struct Args {
 
 impl Config {
     /// Creates a new `Config` instance with the specified values.
+    ///
+    /// # Example
+    /// ```
+    /// use pytv::Config;
+    /// use regex::Regex;
+    /// let config = Config::new("!".to_string(), Regex::new(r"`([^`]+)`").unwrap(), false, false, 4);
+    /// let default_config = Config::default();
+    /// assert_eq!(config.magic_comment_str, default_config.magic_comment_str);
+    /// ```
     pub fn new(
         magic_comment_str: String,
         template_re: Regex,
