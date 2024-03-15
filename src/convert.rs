@@ -3,7 +3,7 @@ use crate::FileOptions;
 use std::io::{Result, Write};
 use std::path;
 
-/// The `Convert` struct represents a converter that converts PYTV script to Python script to generate Verilog.
+/// Represents a converter that converts PYTV script to Python script to generate Verilog.
 ///
 /// It is also possible to run the Python script after conversion and optionally delete it after running it.
 /// It contains methods for converting code and managing input/output files.
