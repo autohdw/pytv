@@ -1,5 +1,5 @@
-# pytv
-Python Templated Verilog
+# PyTV
+**Py**thon **T**emplated **V**erilog
 
 ## Package
 The package `pytv` is available on [crates.io](https://crates.io/crates/pytv).

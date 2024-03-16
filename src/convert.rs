@@ -1,9 +1,11 @@
 use crate::Config;
 use crate::FileOptions;
-use std::io::{Result, Write};
+use std::error::Error;
+use std::io::{Result as IoResult, Write};
 use std::path;
+use std::result::Result;
 
-/// Represents a converter that converts PYTV script to Python script to generate Verilog.
+/// Represents a converter that converts PyTV script to Python script to generate Verilog.
 ///
 /// It is also possible to run the Python script after conversion and optionally delete it after running it.
 /// It contains methods for converting code and managing input/output files.
@@ -15,6 +17,7 @@ pub struct Convert {
 
 impl Convert {
     /// Creates a new `Convert` instance with the given configuration and file options.
+    // #[cfg(not(feature = "inst"))]
     pub fn new(config: Config, file_options: FileOptions) -> Convert {
         Convert {
             config,
@@ -23,19 +26,20 @@ impl Convert {
     }
 
     /// Creates a new `Convert` instance by parsing command line arguments.
+    // #[cfg(not(feature = "inst"))]
     pub fn from_args() -> Convert {
         let (config, file_options) = Config::from_args();
         Convert::new(config, file_options)
     }
 
     /// Opens the input file and reads its contents as a string.
-    fn open_input(&self) -> Result<String> {
+    fn open_input(&self) -> IoResult<String> {
         std::fs::read_to_string(&self.file_options.input)
     }
 
     /// Opens the output Python file and returns a file handle.
     /// Note: This will overwrite the existing file.
-    fn open_output(&self) -> Result<std::fs::File> {
+    fn open_output(&self) -> IoResult<std::fs::File> {
         std::fs::File::create(&self.output_python_file_name())
     }
 
@@ -101,7 +105,7 @@ impl Convert {
     /// Runs the Python code to generate verilog.
     ///
     /// The command `python3` should be available to call.
-    fn run_python(&self) -> Result<()> {
+    fn run_python(&self) -> IoResult<()> {
         let py_file = self.output_python_file_name();
         let v_file = self.output_file_name();
         let v_file_f = std::fs::File::create(&v_file)?;
@@ -127,11 +131,24 @@ impl Convert {
         Ok(())
     }
 
+    #[cfg(not(feature = "inst"))]
+    fn process_python_line<W: Write>(
+        &self,
+        line: &str,
+        py_indent_space: usize,
+        stream: &mut W,
+    ) -> Result<()> {
+        writeln!(stream, "{}", utf8_slice::from(&line, py_indent_space))
+    }
+
     /// Converts the code and writes the converted code to the given stream.
-    pub fn convert<W: Write>(&self, mut stream: W) -> Result<()> {
+    pub fn convert<W: Write>(&self, mut stream: W) -> Result<(), Box<dyn Error>> {
         let mut first_py_line = false;
         let mut py_indent_space = 0usize;
         let magic_string_len = 2 + self.config.magic_comment_str.len();
+        #[cfg(feature = "inst")]
+        let mut within_inst = false;
+        let mut inst_str = String::new();
         // parse line by line
         for line in self.open_input()?.lines() {
             let line = self.pre_process_line(&line);
@@ -141,7 +158,10 @@ impl Convert {
                     first_py_line = true;
                     py_indent_space = line.chars().position(|c| !c.is_whitespace()).unwrap_or(0);
                 }
-                writeln!(stream, "{}", utf8_slice::from(&line, py_indent_space))?;
+                #[cfg(feature = "inst")]
+                self.process_python_line(&line, py_indent_space, &mut stream, &mut within_inst, &mut inst_str)?;
+                #[cfg(not(feature = "inst"))]
+                self.process_python_line(&line, py_indent_space, &mut stream)?;
             } else {
                 let line = self.apply_verilog_regex(self.escape_verilog(&line).as_str());
                 writeln!(stream, "print(f'{line}')")?;
@@ -153,7 +173,7 @@ impl Convert {
     /// Converts the code and writes the converted code to a file.
     ///
     /// With default `Config`, the output will be a Python file.
-    pub fn convert_to_file(&self) -> Result<()> {
+    pub fn convert_to_file(&self) -> Result<(), Box<dyn Error>> {
         let out_f = self.open_output()?;
         self.convert(out_f)?;
         if self.config.run_python {

@@ -1,7 +1,7 @@
 use clap::Parser;
 use regex::Regex;
 
-/// Represents the configuration options for PYTV.
+/// Represents the configuration options for PyTV.
 #[derive(Debug)]
 pub struct Config {
     /// The magic comment string used to identify template sections in the input file.
@@ -16,7 +16,7 @@ pub struct Config {
     pub tab_size: u32,
 }
 
-/// Represents the options for input and output file for PYTV.
+/// Represents the options for input and output file for PyTV.
 #[derive(Debug, Default)]
 pub struct FileOptions {
     /// The input file path.

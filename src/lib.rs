@@ -15,8 +15,12 @@
 //! - **AHDW**: a DSL, the predecessor of this project
 //!   [[paper at IEEE](https://ieeexplore.ieee.org/document/10396119)]
 //!   [[paper PDF](https://wqzhao.org/assets/zhao2023automatic.pdf)]
+
 mod config;
 mod convert;
+
+#[cfg(feature = "inst")]
+mod inst;
 
 pub use config::Config;
 pub use config::FileOptions;

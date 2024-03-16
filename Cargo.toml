@@ -11,7 +11,13 @@ categories = ["template-engine", "compilers", "development-tools"]
 exclude = ["examples/*", "target/*", "Cargo.lock", ".github/*", ".vscode/*", ".DS_Store"]
 edition = "2021"
 
+[features]
+default = ["inst"]
+inst = ["dep:serde", "dep:serde_yaml"]
+
 [dependencies]
 clap = { version = "4.5.2", features = ["derive"] }
 regex = "1.10.3"
 utf8_slice = "1.0.0"
+serde = { version = "1.0", optional = true }
+serde_yaml = { version = "0.9", optional = true }
