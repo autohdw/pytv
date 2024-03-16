@@ -16,7 +16,7 @@ impl Convert {
         py_indent_space: usize,
         stream: &mut W,
         within_inst: &mut bool,
-        inst_str: &str,
+        inst_str: &mut String,
     ) -> Result<(), Box<dyn Error>> {
         match self.inst_state(line) {
             InstState::Begin => {
@@ -35,10 +35,11 @@ impl Convert {
                 writeln!(stream, "print('// END of INST')")?;
             }
             _ => {
+                let useful_str = utf8_slice::from(&line, py_indent_space);
                 if *within_inst {
-                    inst_str.to_string().push_str(&format!("{line}\n"));
+                    inst_str.push_str(&format!("{useful_str}\n"));
                 } else {
-                    writeln!(stream, "{}", utf8_slice::from(&line, py_indent_space))?;
+                    writeln!(stream, "{useful_str}")?;
                     // normal Python line
                 }
             }

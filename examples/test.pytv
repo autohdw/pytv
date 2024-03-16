@@ -5,3 +5,10 @@ Do nothing here!
 Do nothing here either! { some content }
 //! a = 2
 `1 + 2` and how about here ` a * 2 `
+//! <INST>
+//! module: test
+//! name: inst_test
+//! parameters:
+//!  - name1: value1
+//!  - name2: value2
+//! </INST>
