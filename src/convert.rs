@@ -38,6 +38,7 @@ impl Convert {
     }
 
     /// Opens the output Python file and returns a file handle.
+    ///
     /// Note: This will overwrite the existing file.
     fn open_output(&self) -> IoResult<std::fs::File> {
         std::fs::File::create(&self.output_python_file_name())
@@ -64,6 +65,11 @@ impl Convert {
     /// Generates the output Python file name based on the input file name and configuration.
     fn output_python_file_name(&self) -> String {
         self.output_file_name() + ".py"
+    }
+
+    /// Generates the output instantiation file name based on the input file name and configuration.
+    fn output_inst_file_name(&self) -> String {
+        self.output_file_name() + ".inst"
     }
 
     /// Checks if a line of code is a Python line based on the magic comment string in the configuration.
@@ -149,6 +155,8 @@ impl Convert {
         #[cfg(feature = "inst")]
         let mut within_inst = false;
         let mut inst_str = String::new();
+        #[cfg(feature = "inst")]
+        writeln!(stream, "_inst_file = open('{}', 'w')", self.output_inst_file_name())?;
         // parse line by line
         for line in self.open_input()?.lines() {
             let line = self.pre_process_line(&line);
@@ -159,7 +167,13 @@ impl Convert {
                     py_indent_space = line.chars().position(|c| !c.is_whitespace()).unwrap_or(0);
                 }
                 #[cfg(feature = "inst")]
-                self.process_python_line(&line, py_indent_space, &mut stream, &mut within_inst, &mut inst_str)?;
+                self.process_python_line(
+                    &line,
+                    py_indent_space,
+                    &mut stream,
+                    &mut within_inst,
+                    &mut inst_str,
+                )?;
                 #[cfg(not(feature = "inst"))]
                 self.process_python_line(&line, py_indent_space, &mut stream)?;
             } else {
@@ -167,6 +181,8 @@ impl Convert {
                 writeln!(stream, "print(f'{line}')")?;
             }
         }
+        #[cfg(feature = "inst")]
+        writeln!(stream, "_inst_file.close()")?;
         Ok(())
     }
 

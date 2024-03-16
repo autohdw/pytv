@@ -1,5 +1,8 @@
 {
     "rust-analyzer.cargo.features": "all",
+    "files.associations": {
+        "*.inst": "yaml"
+    },
     "cSpell.words": [
         "pytv"
     ]

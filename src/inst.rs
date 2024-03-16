@@ -56,8 +56,8 @@ impl Convert {
     }
 
     fn print_inst<W: Write>(&self, stream: &mut W, inst_str: &str) -> Result<(), Box<dyn Error>> {
-        // TODO: process YML and write to file
-        writeln!(stream, "{}", inst_str)?;
+        // TODO: process YML
+        writeln!(stream, "_inst_file.write('''{}''')", inst_str)?;
         Ok(())
     }
 }
