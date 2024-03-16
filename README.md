@@ -1,6 +1,10 @@
 # PyTV
 **Py**thon **T**emplated **V**erilog
 
+[![Crates.io Version](https://img.shields.io/crates/v/pytv?style=for-the-badge)](https://crates.io/crates/pytv)
+[![docs.rs](https://img.shields.io/docsrs/pytv?style=for-the-badge&label=docs.rs)](https://docs.rs/pytv)
+[![GitHub](https://img.shields.io/github/license/autohdw/pytv?style=for-the-badge)](LICENSE)
+
 ## Package
 The package `pytv` is available on [crates.io](https://crates.io/crates/pytv).
 Documentation is available on [docs.rs](https://docs.rs/pytv).

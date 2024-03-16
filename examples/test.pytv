@@ -8,10 +8,24 @@ Do nothing here either! { some content }
 //! <INST>
 //! module: test
 //! name: inst_test
+//! vparams:
+//!   N: 8
 //! parameters:
-//!   - name1: value1
-//!   - name2: value2
-//!   - name`1+2`: `a`
+//!   name1: value1
+//!   name2: value2
+//!   name`1+2`: `a`
 //! ports:
-//!   - port1: net1
+//!   port1: net1
+//! </INST>
+wire x;
+assign x = y;
+
+//! ted = "teddy"
+// another inst here ->
+//! <INST>
+//! module: another_test
+//! name: another_inst_`ted`
+//! ports:
+//!   port1: y
+//!   port2: z
 //! </INST>

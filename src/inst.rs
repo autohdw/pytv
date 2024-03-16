@@ -8,6 +8,15 @@ enum InstState {
     End,
 }
 
+fn yaml_value_as_str(value: &serde_yaml::Value) -> Option<String> {
+    match value {
+        serde_yaml::Value::String(s) => Some(s.clone()),
+        serde_yaml::Value::Number(n) => Some(n.to_string().clone()),
+        serde_yaml::Value::Bool(b) => Some(b.to_string().clone()),
+        _ => None,
+    }
+}
+
 impl Convert {
     pub(crate) fn process_python_line<W: Write>(
         &self,
@@ -31,6 +40,7 @@ impl Convert {
                 }
                 *within_inst = false;
                 self.print_inst(stream, inst_str)?;
+                inst_str.clear();
                 writeln!(stream, "print('// END of INST')")?;
             }
             _ => {
@@ -57,10 +67,84 @@ impl Convert {
     fn print_inst<W: Write>(&self, stream: &mut W, inst_str: &str) -> Result<(), Box<dyn Error>> {
         let inst_map: serde_yaml::Value =
             serde_yaml::from_str(&self.apply_protected_verilog_regex(inst_str))?;
-        let mut inst_str_parsed = serde_yaml::to_string(&vec![inst_map])?;
-        inst_str_parsed = inst_str_parsed.replace("__LEFT_BRACKET__{", "{");
-        inst_str_parsed = inst_str_parsed.replace("}__RIGHT_BRACKET__", "}");
+        let mut inst_str_parsed = serde_yaml::to_string(&vec![&inst_map])?;
+        inst_str_parsed = self.undo_protected_brackets(inst_str_parsed.as_str());
+        // print to .inst
         writeln!(stream, "_inst_file.write(f'''{}''')", inst_str_parsed)?;
+        // print to .v
+        match inst_map["module"].as_str() {
+            Some(module) => writeln!(
+                stream,
+                "print(f'{}', end='')",
+                self.undo_protected_brackets(module)
+            )?,
+            None => return Err("No module name found in the <INST>.".into()),
+        }
+        let mut first_vparam = true;
+        if let Some(vparams) = inst_map["vparams"].as_mapping() {
+            for (key, value) in vparams.iter() {
+                if let (Some(key_str), Some(value_str)) = (key.as_str(), yaml_value_as_str(value)) {
+                    let value_str = value_str.as_str();
+                    writeln!(
+                        stream,
+                        "print(f'{}\\n  parameter {} = {}')",
+                        if first_vparam {
+                            first_vparam = false;
+                            "#("
+                        } else {
+                            ","
+                        },
+                        self.escape_single_quote(self.undo_protected_brackets(key_str).as_str()),
+                        self.escape_single_quote(self.undo_protected_brackets(value_str).as_str())
+                    )?;
+                } else {
+                    return Err("Invalid vparams found in the <INST>.".into());
+                }
+            }
+        }
+        if !first_vparam {
+            writeln!(stream, "print(f')')")?;
+        }
+        match inst_map["name"].as_str() {
+            Some(name) => writeln!(
+                stream,
+                "print(f' {} (')",
+                self.undo_protected_brackets(name)
+            )?,
+            None => return Err("No instantiation name found in the <INST>.".into()),
+        }
+        let mut first_port = true;
+        if let Some(ports) = inst_map["ports"].as_mapping() {
+            println!("{:?}", ports);
+            for (key, value) in ports.iter() {
+                if let (Some(key_str), Some(value_str)) = (key.as_str(), yaml_value_as_str(value)) {
+                    let value_str = value_str.as_str();
+                    writeln!(
+                        stream,
+                        "print(f'{}  .{}({})', end='')",
+                        if first_port {
+                            first_port = false;
+                            ""
+                        } else {
+                            ",\\n"
+                        },
+                        self.escape_single_quote(self.undo_protected_brackets(key_str).as_str()),
+                        self.escape_single_quote(self.undo_protected_brackets(value_str).as_str())
+                    )?;
+                }
+            }
+        }
+        writeln!(stream, "print(f'\\n);')")?;
+
         Ok(())
+    }
+
+    fn undo_protected_brackets(&self, str: &str) -> String {
+        str.replace("__LEFT_BRACKET__{", "{")
+            .replace("}__RIGHT_BRACKET__", "}")
+    }
+
+    fn escape_single_quote(&self, str: &str) -> String {
+        str.replace("'", "\\'")
     }
 }
