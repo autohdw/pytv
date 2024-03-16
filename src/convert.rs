@@ -108,6 +108,13 @@ impl Convert {
             .to_string()
     }
 
+    pub(crate) fn apply_protected_verilog_regex(&self, line: &str) -> String {
+        self.config
+            .template_re
+            .replace_all(line, format!("__LEFT_BRACKET__{{$1}}__RIGHT_BRACKET__").as_str())
+            .to_string()
+    }
+
     /// Runs the Python code to generate verilog.
     ///
     /// The command `python3` should be available to call.

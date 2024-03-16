@@ -11,4 +11,7 @@ Do nothing here either! { some content }
 //! parameters:
 //!   - name1: value1
 //!   - name2: value2
+//!   - name`1+2`: `a`
+//! ports:
+//!   - port1: net1
 //! </INST>

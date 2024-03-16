@@ -1,7 +1,6 @@
+use super::Convert;
 use std::error::Error;
 use std::io::Write;
-// use std::io::{Write, Result as IoResult};
-use super::Convert;
 
 enum InstState {
     None,
@@ -39,8 +38,8 @@ impl Convert {
                 if *within_inst {
                     inst_str.push_str(&format!("{useful_str}\n"));
                 } else {
-                    writeln!(stream, "{useful_str}")?;
                     // normal Python line
+                    writeln!(stream, "{useful_str}")?;
                 }
             }
         }
@@ -56,8 +55,12 @@ impl Convert {
     }
 
     fn print_inst<W: Write>(&self, stream: &mut W, inst_str: &str) -> Result<(), Box<dyn Error>> {
-        // TODO: process YML
-        writeln!(stream, "_inst_file.write('''{}''')", inst_str)?;
+        let inst_map: serde_yaml::Value =
+            serde_yaml::from_str(&self.apply_protected_verilog_regex(inst_str))?;
+        let mut inst_str_parsed = serde_yaml::to_string(&vec![inst_map])?;
+        inst_str_parsed = inst_str_parsed.replace("__LEFT_BRACKET__{", "{");
+        inst_str_parsed = inst_str_parsed.replace("}__RIGHT_BRACKET__", "}");
+        writeln!(stream, "_inst_file.write(f'''{}''')", inst_str_parsed)?;
         Ok(())
     }
 }
