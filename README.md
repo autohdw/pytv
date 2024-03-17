@@ -14,6 +14,14 @@ To use the package, run
 cargo add pytv
 ```
 
+## Features
+### Python Template
+This is the basic feature of this package.
+
+### Instantiation
+The crate feature `inst` is enabled by default.
+YAML contents between `<INST>` and `</INST>` are used to provide instantiation information.
+
 ## Related Auto Generator Projects
 - **FLAMES**: template-based C++ library for Vitis HLS
   [[website](https://flames.autohdw.com)]

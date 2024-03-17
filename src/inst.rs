@@ -2,6 +2,7 @@ use super::Convert;
 use std::error::Error;
 use std::io::Write;
 
+/// Represents the state of module instantiation.
 enum InstState {
     None,
     Begin,

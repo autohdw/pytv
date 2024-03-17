@@ -1,7 +1,11 @@
 //! Python Templated Verilog
 //! 
 //! # Generation Process
-//! `.pytv` --> `.v.py` --> `.py`
+//! ```txt
+//! .pytv ----> .v.py --+-> .v
+//!                     |
+//!                     +-> .inst
+//! ```
 //! 
 //! # Examples
 //! To be added.
