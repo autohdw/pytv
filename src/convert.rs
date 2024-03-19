@@ -40,7 +40,7 @@ impl Convert {
     /// Opens the output Python file and returns a file handle.
     ///
     /// Note: This will overwrite the existing file.
-    fn open_output(&self) -> IoResult<std::fs::File> {
+    pub fn open_output(&self) -> IoResult<std::fs::File> {
         std::fs::File::create(&self.output_python_file_name())
     }
 
@@ -118,7 +118,7 @@ impl Convert {
     /// Runs the Python code to generate verilog.
     ///
     /// The command `python3` should be available to call.
-    fn run_python(&self) -> IoResult<()> {
+    pub fn run_python(&self) -> IoResult<()> {
         let py_file = self.output_python_file_name();
         let v_file = self.output_file_name();
         let v_file_f = std::fs::File::create(&v_file)?;
@@ -172,6 +172,13 @@ impl Convert {
                 if !first_py_line && !line.is_empty() {
                     first_py_line = true;
                     py_indent_space = line.chars().position(|c| !c.is_whitespace()).unwrap_or(0);
+                }
+                if !utf8_slice::till(&line, py_indent_space).trim().is_empty() {
+                    Err(format!(
+                        "Python line should start with {} spaces.\nUnexpected line: {}",
+                        py_indent_space,
+                        &line
+                    ))?;
                 }
                 #[cfg(feature = "inst")]
                 self.process_python_line(
