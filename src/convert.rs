@@ -15,9 +15,21 @@ pub struct Convert {
     file_options: FileOptions,
 }
 
+enum LineType {
+    Verilog,
+    PythonInline,
+    PythonBlock,
+    None,
+}
+
+impl Default for LineType {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
 impl Convert {
     /// Creates a new `Convert` instance with the given configuration and file options.
-    // #[cfg(not(feature = "inst"))]
     pub fn new(config: Config, file_options: FileOptions) -> Convert {
         Convert {
             config,
@@ -26,7 +38,6 @@ impl Convert {
     }
 
     /// Creates a new `Convert` instance by parsing command line arguments.
-    // #[cfg(not(feature = "inst"))]
     pub fn from_args() -> Convert {
         let (config, file_options) = Config::from_args();
         Convert::new(config, file_options)
@@ -72,10 +83,32 @@ impl Convert {
         self.output_file_name() + ".inst"
     }
 
-    /// Checks if a line of code is a Python line based on the magic comment string in the configuration.
-    fn if_py_line(&self, line: &str) -> bool {
+    /// Checks if a line of code is a Python inline based on the magic comment string in the configuration.
+    fn if_py_inline(&self, line: &str) -> bool {
         line.trim_start()
             .starts_with(&format!("//{}", self.config.magic_comment_str))
+    }
+
+    fn line_type(&self, line_type: LineType, line: &str) -> LineType {
+        let trimmed_line = line.trim_start();
+        match line_type {
+            LineType::PythonBlock => {
+                if trimmed_line == "*/" {
+                    LineType::None // end of PythonBlock does nothing
+                } else {
+                    LineType::PythonBlock
+                }
+            }
+            _ => {
+                if trimmed_line.starts_with("//!") {
+                    LineType::PythonBlock
+                } else if trimmed_line.starts_with("//") {
+                    LineType::Verilog
+                } else {
+                    LineType::PythonInline
+                }
+            }
+        }
     }
 
     /// Pre-processes a line of code by trimming trailing whitespace and replacing tabs with spaces.
@@ -111,7 +144,10 @@ impl Convert {
     pub(crate) fn apply_protected_verilog_regex(&self, line: &str) -> String {
         self.config
             .template_re
-            .replace_all(line, format!("__LEFT_BRACKET__{{$1}}__RIGHT_BRACKET__").as_str())
+            .replace_all(
+                line,
+                format!("__LEFT_BRACKET__{{$1}}__RIGHT_BRACKET__").as_str(),
+            )
             .to_string()
     }
 
@@ -163,11 +199,15 @@ impl Convert {
         let mut within_inst = false;
         let mut inst_str = String::new();
         #[cfg(feature = "inst")]
-        writeln!(stream, "_inst_file = open('{}', 'w')", self.output_inst_file_name())?;
+        writeln!(
+            stream,
+            "_inst_file = open('{}', 'w')",
+            self.output_inst_file_name()
+        )?;
         // parse line by line
         for line in self.open_input()?.lines() {
             let line = self.pre_process_line(&line);
-            if self.if_py_line(&line) {
+            if self.if_py_inline(&line) {
                 let line = utf8_slice::from(line.trim_start(), magic_string_len);
                 if !first_py_line && !line.is_empty() {
                     first_py_line = true;
@@ -176,8 +216,7 @@ impl Convert {
                 if !utf8_slice::till(&line, py_indent_space).trim().is_empty() {
                     Err(format!(
                         "Python line should start with {} spaces.\nUnexpected line: {}",
-                        py_indent_space,
-                        &line
+                        py_indent_space, &line
                     ))?;
                 }
                 #[cfg(feature = "inst")]
@@ -254,12 +293,12 @@ mod tests {
     }
 
     #[test]
-    fn test_if_py_line() {
+    fn test_if_py_inline() {
         let convert = Convert::default();
-        assert!(convert.if_py_line("//! a = 1"));
-        assert!(convert.if_py_line("//!a = 1"));
-        assert!(convert.if_py_line("    //!  a = 1"));
-        assert!(!convert.if_py_line("// a = 1"));
-        assert!(!convert.if_py_line("a = 1"));
+        assert!(convert.if_py_inline("//! a = 1"));
+        assert!(convert.if_py_inline("//!a = 1"));
+        assert!(convert.if_py_inline("    //!  a = 1"));
+        assert!(!convert.if_py_inline("// a = 1"));
+        assert!(!convert.if_py_inline("a = 1"));
     }
 }
