@@ -197,7 +197,18 @@ impl Convert {
         #[cfg(feature = "inst")]
         writeln!(
             stream,
-            "_inst_file = open('{}', 'w')",
+            concat!(
+                "_inst_file = open('{}', 'w')\n",
+                "def _inst_var_map(tuples):\n",
+                "    s = ['%s: %s\\n' % tuple for tuple in tuples]\n",
+                "    return '    '.join(s)\n\n",
+                "def _verilog_ports_var_map(tuples, first_port):\n",
+                "    s = ['  .%s(%s)' % tuple for tuple in tuples]\n",
+                "    return ('' if first_port else ',\\n') + ',\\n'.join(s)\n\n",
+                "def _verilog_vparams_var_map(tuples, first_vparam):\n",
+                "    s = ['\\n  parameter %s = %s' % tuple for tuple in tuples]\n",
+                "    return ('#(' if first_vparam else ',') + ','.join(s)\n\n",
+            ),
             self.output_inst_file_name()
         )?;
         let mut line_type = LineType::default();

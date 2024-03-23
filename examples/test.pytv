@@ -5,17 +5,33 @@ Do nothing here!
 Do nothing here either! { some content }
 //! a = 2
 `1 + 2` and how about here ` a * 2 `
+//! dyn_ports = [
+//!     ("portA", "wire_a"),
+//!     ("portB", "wire_b"),
+//!     ("portC", "wire_c"),
+//! ]
+//! dyn_vparams = []
+//! for i in range(4):
+//!     dyn_vparams.append((f"param{i}", i))
+//! value_M = 32
+//! dyn_parameters = []
+//! for i in range(2):
+//!     dyn_parameters.append((f"name{i+10}", i + 10))
 //! <INST>
 //! module: test
 //! name: inst_test
 //! vparams:
 //!   N: 8
+//!   !mystery: dyn_vparams
+//!   M: `value_M`
 //! parameters:
 //!   name1: value1
 //!   name2: value2
 //!   name`1+2`: `a`
+//!   !other_parameters: dyn_parameters
 //! ports:
 //!   port1: net1
+//!   !other_name: dyn_ports
 //! </INST>
 wire x;
 assign x = y;

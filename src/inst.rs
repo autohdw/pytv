@@ -1,4 +1,5 @@
 use super::Convert;
+use regex::{self, Regex};
 use std::error::Error;
 use std::io::Write;
 
@@ -65,11 +66,34 @@ impl Convert {
         }
     }
 
+    fn apply_protected_inst_group_regex(inst_str: &str) -> String {
+        let re = Regex::new(r"!(\w+):(.*)[\r\n$]").unwrap();
+        re.replace_all(inst_str, "__group_$1:$2\n").to_string()
+    }
+
+    fn inst_group_print_to_dot_inst(inst_str: &str) -> String {
+        let re = Regex::new(r"__group_\w+:\s*(.*)[\r\n$]").unwrap();
+        re.replace_all(
+            inst_str,
+            "''')\n_inst_file.write(f'{_inst_var_map($1)}')\n_inst_file.write(f'''",
+        )
+        .to_string()
+    }
+
     fn print_inst<W: Write>(&self, stream: &mut W, inst_str: &str) -> Result<(), Box<dyn Error>> {
+        print!(
+            "{}",
+            Self::apply_protected_inst_group_regex(inst_str).as_str()
+        );
         let inst_map: serde_yaml::Value =
-            serde_yaml::from_str(&self.apply_protected_verilog_regex(inst_str))?;
+            serde_yaml::from_str(&self.apply_protected_verilog_regex(
+                Self::apply_protected_inst_group_regex(inst_str).as_str(),
+            ))?;
         let mut inst_str_parsed = serde_yaml::to_string(&vec![&inst_map])?;
-        inst_str_parsed = self.undo_protected_brackets(inst_str_parsed.as_str());
+        inst_str_parsed = Self::inst_group_print_to_dot_inst(
+            self.undo_protected_brackets(inst_str_parsed.as_str())
+                .as_str(),
+        );
         // print to .inst
         writeln!(stream, "_inst_file.write(f'''{}''')", inst_str_parsed)?;
         // print to .v
@@ -86,18 +110,32 @@ impl Convert {
             for (key, value) in vparams.iter() {
                 if let (Some(key_str), Some(value_str)) = (key.as_str(), yaml_value_as_str(value)) {
                     let value_str = value_str.as_str();
-                    writeln!(
-                        stream,
-                        "print(f'{}\\n  parameter {} = {}')",
-                        if first_vparam {
-                            first_vparam = false;
-                            "#("
-                        } else {
-                            ","
-                        },
-                        self.escape_single_quote(self.undo_protected_brackets(key_str).as_str()),
-                        self.escape_single_quote(self.undo_protected_brackets(value_str).as_str())
-                    )?;
+                    if key_str.starts_with("__group_") {
+                        writeln!(
+                            stream,
+                            "print(_verilog_vparams_var_map({}, {}), end='')",
+                            value_str,
+                            if first_vparam {
+                                first_vparam = false;
+                                "True"
+                            } else {
+                                "False"
+                            },
+                        )?;
+                    } else {
+                        writeln!(
+                            stream,
+                            "print(f'{}\\n  parameter {} = {}', end='')",
+                            if first_vparam {
+                                first_vparam = false;
+                                "#("
+                            } else {
+                                ","
+                            },
+                            self.escape_single_quote(self.undo_protected_brackets(key_str).as_str()),
+                            self.escape_single_quote(self.undo_protected_brackets(value_str).as_str())
+                        )?;
+                    }
                 } else {
                     return Err("Invalid vparams found in the <INST>.".into());
                 }
@@ -120,18 +158,36 @@ impl Convert {
             for (key, value) in ports.iter() {
                 if let (Some(key_str), Some(value_str)) = (key.as_str(), yaml_value_as_str(value)) {
                     let value_str = value_str.as_str();
-                    writeln!(
-                        stream,
-                        "print(f'{}  .{}({})', end='')",
-                        if first_port {
-                            first_port = false;
-                            ""
-                        } else {
-                            ",\\n"
-                        },
-                        self.escape_single_quote(self.undo_protected_brackets(key_str).as_str()),
-                        self.escape_single_quote(self.undo_protected_brackets(value_str).as_str())
-                    )?;
+                    if key_str.starts_with("__group_") {
+                        writeln!(
+                            stream,
+                            "print(_verilog_ports_var_map({}, {}), end='')",
+                            value_str,
+                            if first_port {
+                                first_port = false;
+                                "True"
+                            } else {
+                                "False"
+                            },
+                        )?;
+                    } else {
+                        writeln!(
+                            stream,
+                            "print(f'{}  .{}({})', end='')",
+                            if first_port {
+                                first_port = false;
+                                ""
+                            } else {
+                                ",\\n"
+                            },
+                            self.escape_single_quote(
+                                self.undo_protected_brackets(key_str).as_str()
+                            ),
+                            self.escape_single_quote(
+                                self.undo_protected_brackets(value_str).as_str()
+                            )
+                        )?;
+                    }
                 }
             }
         }
