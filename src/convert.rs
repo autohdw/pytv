@@ -15,10 +15,11 @@ pub struct Convert {
     file_options: FileOptions,
 }
 
+#[derive(Debug, PartialEq)]
 enum LineType {
     Verilog,
     PythonInline,
-    PythonBlock,
+    PythonBlock(bool), // 'false' if in first line ('/*!'), 'true' otherwise
     None,
 }
 
@@ -83,29 +84,24 @@ impl Convert {
         self.output_file_name() + ".inst"
     }
 
-    /// Checks if a line of code is a Python inline based on the magic comment string in the configuration.
-    fn if_py_inline(&self, line: &str) -> bool {
-        line.trim_start()
-            .starts_with(&format!("//{}", self.config.magic_comment_str))
-    }
-
-    fn line_type(&self, line_type: LineType, line: &str) -> LineType {
+    fn switch_line_type(&self, line_type: &mut LineType, line: &str) {
         let trimmed_line = line.trim_start();
-        match line_type {
-            LineType::PythonBlock => {
+        *line_type = match line_type {
+            LineType::PythonBlock(_not_first_line) => {
                 if trimmed_line == "*/" {
                     LineType::None // end of PythonBlock does nothing
                 } else {
-                    LineType::PythonBlock
+                    LineType::PythonBlock(true)
                 }
             }
             _ => {
-                if trimmed_line.starts_with("//!") {
-                    LineType::PythonBlock
-                } else if trimmed_line.starts_with("//") {
-                    LineType::Verilog
-                } else {
+                if trimmed_line.starts_with(&format!("/*{}", self.config.magic_comment_str)) {
+                    LineType::PythonBlock(false)
+                } else if trimmed_line.starts_with(&format!("//{}", self.config.magic_comment_str))
+                {
                     LineType::PythonInline
+                } else {
+                    LineType::Verilog
                 }
             }
         }
@@ -204,34 +200,53 @@ impl Convert {
             "_inst_file = open('{}', 'w')",
             self.output_inst_file_name()
         )?;
+        let mut line_type = LineType::default();
         // parse line by line
         for line in self.open_input()?.lines() {
             let line = self.pre_process_line(&line);
-            if self.if_py_inline(&line) {
-                let line = utf8_slice::from(line.trim_start(), magic_string_len);
-                if !first_py_line && !line.is_empty() {
-                    first_py_line = true;
-                    py_indent_space = line.chars().position(|c| !c.is_whitespace()).unwrap_or(0);
+            self.switch_line_type(&mut line_type, line.as_str());
+            match line_type {
+                LineType::PythonBlock(true) => {
+                    #[cfg(feature = "inst")]
+                    self.process_python_line(
+                        &line,
+                        0,
+                        &mut stream,
+                        &mut within_inst,
+                        &mut inst_str,
+                    )?;
+                    #[cfg(not(feature = "inst"))]
+                    self.process_python_line(&line, 0, &mut stream)?;
                 }
-                if !utf8_slice::till(&line, py_indent_space).trim().is_empty() {
-                    Err(format!(
-                        "Python line should start with {} spaces.\nUnexpected line: {}",
-                        py_indent_space, &line
-                    ))?;
+                LineType::PythonInline => {
+                    let line = utf8_slice::from(line.trim_start(), magic_string_len);
+                    if !first_py_line && !line.is_empty() {
+                        first_py_line = true;
+                        py_indent_space =
+                            line.chars().position(|c| !c.is_whitespace()).unwrap_or(0);
+                    }
+                    if !utf8_slice::till(&line, py_indent_space).trim().is_empty() {
+                        Err(format!(
+                            "Python line should start with {} spaces.\nUnexpected line: {}",
+                            py_indent_space, &line
+                        ))?;
+                    }
+                    #[cfg(feature = "inst")]
+                    self.process_python_line(
+                        &line,
+                        py_indent_space,
+                        &mut stream,
+                        &mut within_inst,
+                        &mut inst_str,
+                    )?;
+                    #[cfg(not(feature = "inst"))]
+                    self.process_python_line(&line, py_indent_space, &mut stream)?;
                 }
-                #[cfg(feature = "inst")]
-                self.process_python_line(
-                    &line,
-                    py_indent_space,
-                    &mut stream,
-                    &mut within_inst,
-                    &mut inst_str,
-                )?;
-                #[cfg(not(feature = "inst"))]
-                self.process_python_line(&line, py_indent_space, &mut stream)?;
-            } else {
-                let line = self.apply_verilog_regex(self.escape_verilog(&line).as_str());
-                writeln!(stream, "print(f'{line}')")?;
+                LineType::Verilog => {
+                    let line = self.apply_verilog_regex(self.escape_verilog(&line).as_str());
+                    writeln!(stream, "print(f'{line}')")?;
+                }
+                _ => {}
             }
         }
         #[cfg(feature = "inst")]
@@ -293,12 +308,22 @@ mod tests {
     }
 
     #[test]
-    fn test_if_py_inline() {
+    fn test_switch_line_type() {
+        let mut line_type = LineType::default();
         let convert = Convert::default();
-        assert!(convert.if_py_inline("//! a = 1"));
-        assert!(convert.if_py_inline("//!a = 1"));
-        assert!(convert.if_py_inline("    //!  a = 1"));
-        assert!(!convert.if_py_inline("// a = 1"));
-        assert!(!convert.if_py_inline("a = 1"));
+        convert.switch_line_type(&mut line_type, "assign a = b;");
+        assert_eq!(line_type, LineType::Verilog);
+        convert.switch_line_type(&mut line_type, "//! num = 2 ** n;");
+        assert_eq!(line_type, LineType::PythonInline);
+        convert.switch_line_type(&mut line_type, "   //! num = num + 1;");
+        assert_eq!(line_type, LineType::PythonInline);
+        convert.switch_line_type(&mut line_type, "/*!");
+        assert_eq!(line_type, LineType::PythonBlock(false));
+        convert.switch_line_type(&mut line_type, "num = 2 ** n;");
+        assert_eq!(line_type, LineType::PythonBlock(true));
+        convert.switch_line_type(&mut line_type, "*/");
+        assert_eq!(line_type, LineType::None);
+        convert.switch_line_type(&mut line_type, "// Verilog comment");
+        assert_eq!(line_type, LineType::Verilog);
     }
 }

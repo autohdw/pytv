@@ -20,6 +20,12 @@ Do nothing here either! { some content }
 wire x;
 assign x = y;
 
+/*!
+# Contents within here are for Python block
+for i in range(5):
+    print("// Teddy bear in Python block!")
+*/
+
 //! ted = "teddy"
 // another inst here ->
 //! <INST>
