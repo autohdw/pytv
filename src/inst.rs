@@ -81,10 +81,6 @@ impl Convert {
     }
 
     fn print_inst<W: Write>(&self, stream: &mut W, inst_str: &str) -> Result<(), Box<dyn Error>> {
-        print!(
-            "{}",
-            Self::apply_protected_inst_group_regex(inst_str).as_str()
-        );
         let inst_map: serde_yaml::Value =
             serde_yaml::from_str(&self.apply_protected_verilog_regex(
                 Self::apply_protected_inst_group_regex(inst_str).as_str(),

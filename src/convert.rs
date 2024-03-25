@@ -71,7 +71,7 @@ impl Convert {
                 output = output.replace(ext.to_str().unwrap(), "v");
             }
             output
-        })
+        }).replace("\\", "/")
     }
 
     /// Generates the output Python file name based on the input file name and configuration.
@@ -149,16 +149,19 @@ impl Convert {
 
     /// Runs the Python code to generate verilog.
     ///
-    /// The command `python3` should be available to call.
+    /// The command `python3` (`python` for Windows) should be available to call.
     pub fn run_python(&self) -> IoResult<()> {
         let py_file = self.output_python_file_name();
         let v_file = self.output_file_name();
         let v_file_f = std::fs::File::create(&v_file)?;
-        let output = std::process::Command::new("python3")
+        #[cfg(not(target_family = "windows"))]
+        let python_cmd = "python3";
+        #[cfg(target_family = "windows")]
+        let python_cmd = "python";
+        let output = std::process::Command::new(python_cmd)
             .arg(&py_file)
             .stdout(v_file_f)
             .output()?;
-        dbg!(&output);
         if !output.status.success() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
