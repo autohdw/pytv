@@ -9,7 +9,7 @@
 //! 
 //! # Examples
 //! ```txt
-//! a = 1 + 2;                #  Python inline
+//! //! a = 1 + 2;            #  Python inline
 //! assign wire_`a` = wire_b; // Verilog with variable/expression substitute
 //! /*!
 //! b = a ** 2;               #  Python block

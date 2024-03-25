@@ -19,12 +19,13 @@ cargo add pytv
 This is the basic feature of this package.
 
 ```pytv
-//! a = 1 + 2; # Python inline
+//! a = 1 + 2;            #  Python inline
 assign wire_`a` = wire_b; // Verilog with variable/expression substitute
 /*!
-b = a ** 2; # Python block
+b = a ** 2;               #  Python block
 */
 ```
+The magic comment string can be configured (`!` as default).
 
 ### Instantiation
 The crate feature `inst` is enabled by default.

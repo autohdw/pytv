@@ -1,6 +1,7 @@
 {
     "recommendations": [
         "rust-lang.rust-analyzer",
-        "redhat.vscode-yaml"
+        "redhat.vscode-yaml",
+        "teddy-van-jerry.pytv"
     ]
 }
