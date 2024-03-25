@@ -3,7 +3,7 @@ name = "pytv"
 description = "Python Templated Verilog"
 repository = "https://github.com/autohdw/pytv"
 authors = ["Teddy van Jerry <me@teddy-van-jerry.org>"]
-version = "0.3.1"
+version = "0.3.2"
 readme = "README.md"
 license = "GPL-3.0-or-later"
 keywords = ["verilog", "python", "template", "generation"]
@@ -12,8 +12,9 @@ exclude = ["examples/*", "target/*", "Cargo.lock", ".github/*", ".vscode/*", ".D
 edition = "2021"
 
 [features]
-default = ["inst"]
+default = ["inst", "macro"]
 inst = ["dep:serde", "dep:serde_yaml"]
+macro = []
 
 [dependencies]
 clap = { version = "4.5.2", features = ["derive"] }

@@ -1,4 +1,7 @@
 `timescale 1ns / 1ps
+
+module `OUTPUT_VERILOG_FILE_STEM`;
+
 Do nothing here!
 //! for i in range(5):
 //!     print("Teddy bear!")
@@ -51,3 +54,5 @@ for i in range(5):
 //!   port1: y
 //!   port2: z
 //! </INST>
+
+endmodule

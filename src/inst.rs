@@ -154,7 +154,6 @@ impl Convert {
         }
         let mut first_port = true;
         if let Some(ports) = inst_map["ports"].as_mapping() {
-            println!("{:?}", ports);
             for (key, value) in ports.iter() {
                 if let (Some(key_str), Some(value_str)) = (key.as_str(), yaml_value_as_str(value)) {
                     let value_str = value_str.as_str();

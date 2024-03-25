@@ -186,6 +186,31 @@ impl Convert {
         writeln!(stream, "{}", utf8_slice::from(&line, py_indent_space))
     }
 
+    #[cfg(feature = "macro")]
+    fn print_macros<W: Write>(&self, stream: &mut W) -> Result<(), Box<dyn Error>> {
+        let output_verilog_file_name = &self.output_file_name();
+        let output_inst_file_name = &self.output_inst_file_name();
+        let verilog_path = path::Path::new(output_verilog_file_name);
+        let inst_path = path::Path::new(output_inst_file_name);
+        writeln!(
+            stream,
+            concat!(
+                "# PyTV macros:\n",
+                "OUTPUT_VERILOG_FILE_PATH = '{}'\n",
+                "OUTPUT_VERILOG_FILE_NAME = '{}'\n",
+                "OUTPUT_VERILOG_FILE_STEM = '{}'\n",
+                "OUTPUT_INST_FILE_PATH = '{}'\n",
+                "OUTPUT_INST_FILE_NAME = '{}'\n\n",
+            ),
+            output_verilog_file_name,
+            verilog_path.file_name().unwrap().to_str().unwrap(),
+            verilog_path.file_stem().unwrap().to_str().unwrap(),
+            output_inst_file_name,
+            inst_path.file_name().unwrap().to_str().unwrap(),
+        )?;
+        Ok(())
+    }
+
     /// Converts the code and writes the converted code to the given stream.
     pub fn convert<W: Write>(&self, mut stream: W) -> Result<(), Box<dyn Error>> {
         let mut first_py_line = false;
@@ -211,6 +236,8 @@ impl Convert {
             ),
             self.output_inst_file_name()
         )?;
+        #[cfg(feature = "macro")]
+        self.print_macros(&mut stream)?;
         let mut line_type = LineType::default();
         // parse line by line
         for line in self.open_input()?.lines() {

@@ -4,6 +4,7 @@
         "*.inst": "yaml"
     },
     "cSpell.words": [
+        "endmodule",
         "pytv",
         "vparam",
         "vparams"
