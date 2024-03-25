@@ -18,6 +18,14 @@ cargo add pytv
 ### Python Template
 This is the basic feature of this package.
 
+```pytv
+//! a = 1 + 2; # Python inline
+assign wire_`a` = wire_b; // Verilog with variable/expression substitute
+/*!
+b = a ** 2; # Python block
+*/
+```
+
 ### Instantiation
 The crate feature `inst` is enabled by default.
 YAML contents between `<INST>` and `</INST>` are used to provide instantiation information.

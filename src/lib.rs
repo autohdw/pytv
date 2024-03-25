@@ -8,7 +8,14 @@
 //! ```
 //! 
 //! # Examples
-//! To be added.
+//! ```txt
+//! a = 1 + 2;                #  Python inline
+//! assign wire_`a` = wire_b; // Verilog with variable/expression substitute
+//! /*!
+//! b = a ** 2;               #  Python block
+//! */
+//! ```
+//! The magic comment string can be configured (`!` as default).
 //! 
 //! # Related Auto Generator Projects
 //! - **FLAMES**: template-based C++ library for Vitis HLS
