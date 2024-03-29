@@ -1,5 +1,6 @@
 use clap::Parser;
 use regex::Regex;
+use std::error::Error;
 
 /// Represents the configuration options for PyTV.
 #[derive(Debug)]
@@ -38,6 +39,15 @@ impl Default for Config {
     }
 }
 
+/// Parse a single key-value pair
+fn parse_key_val(s: &str) -> Result<(String, String), Box<dyn Error>>
+{
+    let pos = s
+        .find('=')
+        .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{}`", s))?;
+    Ok((s[..pos].to_string(), s[pos + 1..].to_string()))
+}
+
 /// Python Templated Verilog
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -70,6 +80,9 @@ struct Args {
     /// Magic comment string (after "//")
     #[arg(short, long, default_value = "!", value_name = "STRING")]
     magic: String,
+    /// Variables (multiple occurrences allowed)
+    #[arg(short, long = "var", value_name = "KEY=VAL")]
+    vars: Vec<String>,
 }
 
 impl Config {
@@ -100,8 +113,17 @@ impl Config {
     }
 
     /// Parses the command line arguments and returns a tuple of `Config` and `FileOptions`.
-    pub fn from_args() -> (Config, FileOptions) {
+    pub fn from_args() -> (Config, FileOptions, Option<Vec<(String, String)>>) {
         let args = Args::parse();
+        let vars = args
+            .vars
+            .iter()
+            .map(|s| parse_key_val(s))
+            .collect::<Result<Vec<(String, String)>, Box<dyn Error>>>();
+        if vars.is_err() {
+            eprintln!("Error: {}", vars.err().unwrap());
+            std::process::exit(1);
+        }
         (
             Self::new(
                 args.magic,
@@ -114,6 +136,7 @@ impl Config {
                 input: args.input,
                 output: args.output,
             },
+            vars.ok(),
         )
     }
 

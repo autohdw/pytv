@@ -13,6 +13,7 @@ use std::result::Result;
 pub struct Convert {
     config: Config,
     file_options: FileOptions,
+    vars: Option<Vec<(String, String)>>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -31,17 +32,18 @@ impl Default for LineType {
 
 impl Convert {
     /// Creates a new `Convert` instance with the given configuration and file options.
-    pub fn new(config: Config, file_options: FileOptions) -> Convert {
+    pub fn new(config: Config, file_options: FileOptions, vars: Option<Vec<(String, String)>>) -> Convert {
         Convert {
             config,
             file_options,
+            vars,
         }
     }
 
     /// Creates a new `Convert` instance by parsing command line arguments.
     pub fn from_args() -> Convert {
-        let (config, file_options) = Config::from_args();
-        Convert::new(config, file_options)
+        let (config, file_options, vars) = Config::from_args();
+        Convert::new(config, file_options, vars)
     }
 
     /// Opens the input file and reads its contents as a string.
@@ -242,6 +244,12 @@ impl Convert {
         let mut within_inst = false;
         let mut inst_str = String::new();
         #[cfg(feature = "inst")]
+        // print user-defined variables
+        if let Some(vars) = &self.vars {
+            for (name, value) in vars {
+                writeln!(stream, "{} = {}", name, value)?;
+            }
+        }
         writeln!(
             stream,
             concat!(

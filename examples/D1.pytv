@@ -1,6 +1,6 @@
 //! # port enable settings
-//! if_rst = True
-//! if_en  = True
+//! # parameter: if_rst = True
+//! # parameter: if_en  = True
 // Delay by 1 clock
 `timescale 1ns / 1ps
 
