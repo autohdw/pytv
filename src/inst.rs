@@ -23,7 +23,7 @@ impl Convert {
     pub(crate) fn process_python_line<W: Write>(
         &self,
         line: &str,
-        py_indent_space: usize,
+        py_indent_prior: usize,
         stream: &mut W,
         within_inst: &mut bool,
         inst_str: &mut String,
@@ -46,7 +46,7 @@ impl Convert {
                 writeln!(stream, "print('// END of INST')")?;
             }
             _ => {
-                let useful_str = utf8_slice::from(&line, py_indent_space);
+                let useful_str = utf8_slice::from(&line, py_indent_prior);
                 if *within_inst {
                     inst_str.push_str(&format!("{useful_str}\n"));
                 } else {

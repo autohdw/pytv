@@ -58,20 +58,24 @@ impl Convert {
 
     /// Generates the output file name based on the input file name and configuration.
     fn output_file_name(&self) -> String {
-        self.file_options.output.clone().unwrap_or_else(|| {
-            if self.file_options.output.is_some() {
-                return self.file_options.input.clone();
-            }
-            let mut output = self.file_options.input.clone();
-            // change extension to .v if there is extension
-            let ext = path::Path::new(&output).extension().unwrap_or_default();
-            if ext.is_empty() {
-                output.push_str(".v");
-            } else {
-                output = output.replace(ext.to_str().unwrap(), "v");
-            }
-            output
-        }).replace("\\", "/")
+        self.file_options
+            .output
+            .clone()
+            .unwrap_or_else(|| {
+                if self.file_options.output.is_some() {
+                    return self.file_options.input.clone();
+                }
+                let mut output = self.file_options.input.clone();
+                // change extension to .v if there is extension
+                let ext = path::Path::new(&output).extension().unwrap_or_default();
+                if ext.is_empty() {
+                    output.push_str(".v");
+                } else {
+                    output = output.replace(ext.to_str().unwrap(), "v");
+                }
+                output
+            })
+            .replace("\\", "/")
     }
 
     /// Generates the output Python file name based on the input file name and configuration.
@@ -183,10 +187,10 @@ impl Convert {
     fn process_python_line<W: Write>(
         &self,
         line: &str,
-        py_indent_space: usize,
+        py_indent_prior: usize,
         stream: &mut W,
     ) -> Result<()> {
-        writeln!(stream, "{}", utf8_slice::from(&line, py_indent_space))
+        writeln!(stream, "{}", utf8_slice::from(&line, py_indent_prior))
     }
 
     #[cfg(feature = "macro")]
@@ -214,9 +218,24 @@ impl Convert {
         Ok(())
     }
 
+    fn update_py_indent_space(&self, line: &str, py_indent_space: usize) -> usize {
+        if !line.is_empty() {
+            let re = regex::Regex::new(r":\s*(#|$)").unwrap();
+            line.chars().position(|c| !c.is_whitespace()).unwrap_or(0)
+                + if re.is_match(line) {
+                    self.config.tab_size as usize
+                } else {
+                    0usize
+                }
+        } else {
+            py_indent_space
+        }
+    }
+
     /// Converts the code and writes the converted code to the given stream.
     pub fn convert<W: Write>(&self, mut stream: W) -> Result<(), Box<dyn Error>> {
         let mut first_py_line = false;
+        let mut py_indent_prior = 0usize;
         let mut py_indent_space = 0usize;
         let magic_string_len = 2 + self.config.magic_comment_str.len();
         #[cfg(feature = "inst")]
@@ -248,6 +267,7 @@ impl Convert {
             self.switch_line_type(&mut line_type, line.as_str());
             match line_type {
                 LineType::PythonBlock(true) => {
+                    py_indent_space = self.update_py_indent_space(&line, py_indent_space);
                     #[cfg(feature = "inst")]
                     self.process_python_line(
                         &line,
@@ -263,29 +283,30 @@ impl Convert {
                     let line = utf8_slice::from(line.trim_start(), magic_string_len);
                     if !first_py_line && !line.is_empty() {
                         first_py_line = true;
-                        py_indent_space =
+                        py_indent_prior =
                             line.chars().position(|c| !c.is_whitespace()).unwrap_or(0);
                     }
-                    if !utf8_slice::till(&line, py_indent_space).trim().is_empty() {
+                    if !utf8_slice::till(&line, py_indent_prior).trim().is_empty() {
                         Err(format!(
                             "Python line should start with {} spaces.\nUnexpected line: {}",
-                            py_indent_space, &line
+                            py_indent_prior, &line
                         ))?;
                     }
+                    py_indent_space = self.update_py_indent_space(&line, py_indent_space) - py_indent_prior;
                     #[cfg(feature = "inst")]
                     self.process_python_line(
                         &line,
-                        py_indent_space,
+                        py_indent_prior,
                         &mut stream,
                         &mut within_inst,
                         &mut inst_str,
                     )?;
                     #[cfg(not(feature = "inst"))]
-                    self.process_python_line(&line, py_indent_space, &mut stream)?;
+                    self.process_python_line(&line, py_indent_prior, &mut stream)?;
                 }
                 LineType::Verilog => {
                     let line = self.apply_verilog_regex(self.escape_verilog(&line).as_str());
-                    writeln!(stream, "print(f'{line}')")?;
+                    writeln!(stream, "{}print(f'{line}')", " ".repeat(py_indent_space))?;
                 }
                 _ => {}
             }

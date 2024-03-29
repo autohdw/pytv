@@ -1,0 +1,58 @@
+//! # port enable settings
+//! if_rst = True
+//! if_en  = True
+// Delay by 1 clock
+`timescale 1ns / 1ps
+
+module `OUTPUT_VERILOG_FILE_STEM`#(
+    parameter dwt = 16
+)(
+    op_in, clk
+//! if (if_rst):
+    , rst_n
+//! if (if_en):
+    , en
+//! #
+    , op_out
+);
+
+    input [dwt-1:0] op_in;
+    input clk;
+//! if (if_rst):
+    input rst_n;
+//! if (if_en):
+    input en;
+//! #
+    output reg [dwt-1:0] op_out;
+
+//! if (if_rst and if_en):
+    always @(posedge clk, negedge rst_n) begin
+        if (!rst_n) begin
+            op_out <= 'b0;
+        end  
+        else if (en) begin
+            op_out <= op_in;
+        end
+    end
+//! elif (if_rst and (not if_en)):
+    always @(posedge clk, negedge rst_n) begin
+        if (!rst_n) begin
+            op_out <= 'b0;
+        end 
+        else begin 
+            op_out <= op_in;
+        end
+    end
+//! elif ((not if_rst) and if_en):
+    always @(posedge clk, negedge rst_n) begin
+        if (en) begin
+            op_out <= op_in;
+        end
+    end
+//! else:
+    always @(posedge clk) begin
+        op_out <= op_in;
+    end
+//! #
+
+endmodule

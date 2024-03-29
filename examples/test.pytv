@@ -4,7 +4,8 @@ module `OUTPUT_VERILOG_FILE_STEM`;
 
 Do nothing here!
 //! for i in range(5):
-//!     print("Teddy bear!")
+Teddy Bears!
+//! # <- mark the end of group
 Do nothing here either! { some content }
 //! a = 2
 `1 + 2` and how about here ` a * 2 `
