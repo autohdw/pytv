@@ -246,13 +246,16 @@ impl Convert {
         #[cfg(feature = "inst")]
         // print user-defined variables
         if let Some(vars) = &self.vars {
+            writeln!(stream, "# User-defined variables:")?;
             for (name, value) in vars {
                 writeln!(stream, "{} = {}", name, value)?;
             }
+            writeln!(stream)?;
         }
         writeln!(
             stream,
             concat!(
+                "# PyTV utility functions:\n",
                 "_inst_file = open('{}', 'w')\n",
                 "def _inst_var_map(tuples):\n",
                 "    s = ['%s: %s\\n' % tuple for tuple in tuples]\n",
@@ -262,7 +265,7 @@ impl Convert {
                 "    return ('' if first_port else ',\\n') + ',\\n'.join(s)\n\n",
                 "def _verilog_vparams_var_map(tuples, first_vparam):\n",
                 "    s = ['\\n  parameter %s = %s' % tuple for tuple in tuples]\n",
-                "    return ('#(' if first_vparam else ',') + ','.join(s)\n\n",
+                "    return ('#(' if first_vparam else ',') + ','.join(s)\n",
             ),
             self.output_inst_file_name()
         )?;
