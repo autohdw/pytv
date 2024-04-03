@@ -9,9 +9,14 @@
 The package `pytv` is available on [crates.io](https://crates.io/crates/pytv).
 Documentation is available on [docs.rs](https://docs.rs/pytv).
 
-To use the package, run
+To use the package in a Rust project, run
 ```sh
 cargo add pytv
+```
+
+If you want to install the `pytv` binary, run
+```sh
+cargo install pytv
 ```
 
 ## Features
