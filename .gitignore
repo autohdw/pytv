@@ -4,6 +4,7 @@
 *.v
 *.py
 *.inst
+!*_preamble.py
 
 # macOS
 .DS_Store

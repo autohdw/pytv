@@ -14,6 +14,7 @@ pub struct Convert {
     config: Config,
     file_options: FileOptions,
     vars: Option<Vec<(String, String)>>,
+    preamble_py: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -32,18 +33,24 @@ impl Default for LineType {
 
 impl Convert {
     /// Creates a new `Convert` instance with the given configuration and file options.
-    pub fn new(config: Config, file_options: FileOptions, vars: Option<Vec<(String, String)>>) -> Convert {
+    pub fn new(
+        config: Config,
+        file_options: FileOptions,
+        vars: Option<Vec<(String, String)>>,
+        preamble_py: Option<String>,
+    ) -> Convert {
         Convert {
             config,
             file_options,
             vars,
+            preamble_py,
         }
     }
 
     /// Creates a new `Convert` instance by parsing command line arguments.
     pub fn from_args() -> Convert {
-        let (config, file_options, vars) = Config::from_args();
-        Convert::new(config, file_options, vars)
+        let (config, file_options, vars, preamble_py) = Config::from_args();
+        Convert::new(config, file_options, vars, preamble_py)
     }
 
     /// Opens the input file and reads its contents as a string.
@@ -246,11 +253,19 @@ impl Convert {
         #[cfg(feature = "inst")]
         // print user-defined variables
         if let Some(vars) = &self.vars {
-            writeln!(stream, "# User-defined variables:")?;
-            for (name, value) in vars {
-                writeln!(stream, "{} = {}", name, value)?;
+            if !vars.is_empty() {
+                writeln!(stream, "# User-defined variables:")?;
+                for (name, value) in vars {
+                    writeln!(stream, "{} = {}", name, value)?;
+                }
+                writeln!(stream)?;
             }
-            writeln!(stream)?;
+        }
+        // load preamble
+        if let Some(preamble_py) = &self.preamble_py {
+            // read from file and write to stream
+            let preamble_py = std::fs::read_to_string(preamble_py)?;
+            writeln!(stream, "# Preamble:\n{}", preamble_py)?;
         }
         writeln!(
             stream,
@@ -303,7 +318,8 @@ impl Convert {
                             py_indent_prior, &line
                         ))?;
                     }
-                    py_indent_space = self.update_py_indent_space(&line, py_indent_space) - py_indent_prior;
+                    py_indent_space =
+                        self.update_py_indent_space(&line, py_indent_space) - py_indent_prior;
                     #[cfg(feature = "inst")]
                     self.process_python_line(
                         &line,

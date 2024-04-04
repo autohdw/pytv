@@ -83,6 +83,9 @@ struct Args {
     /// Variables (multiple occurrences allowed)
     #[arg(short, long = "var", value_name = "KEY=VAL")]
     vars: Vec<String>,
+    /// Preamble Python file
+    #[arg(short, long = "preamble", value_name = "FILE", required = false)]
+    preamble_py: String
 }
 
 impl Config {
@@ -113,7 +116,7 @@ impl Config {
     }
 
     /// Parses the command line arguments and returns a tuple of `Config` and `FileOptions`.
-    pub fn from_args() -> (Config, FileOptions, Option<Vec<(String, String)>>) {
+    pub fn from_args() -> (Config, FileOptions, Option<Vec<(String, String)>>, Option<String>) {
         let args = Args::parse();
         let vars = args
             .vars
@@ -137,6 +140,11 @@ impl Config {
                 output: args.output,
             },
             vars.ok(),
+            if args.preamble_py.is_empty() {
+                None
+            } else {
+                Some(args.preamble_py)
+            }
         )
     }
 
