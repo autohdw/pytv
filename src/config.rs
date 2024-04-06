@@ -84,8 +84,8 @@ struct Args {
     #[arg(short, long = "var", value_name = "KEY=VAL")]
     vars: Vec<String>,
     /// Preamble Python file
-    #[arg(short, long = "preamble", value_name = "FILE", required = false)]
-    preamble_py: String
+    #[arg(short, long = "preamble", value_name = "FILE")]
+    preamble_py: Option<String>
 }
 
 impl Config {
@@ -140,11 +140,7 @@ impl Config {
                 output: args.output,
             },
             vars.ok(),
-            if args.preamble_py.is_empty() {
-                None
-            } else {
-                Some(args.preamble_py)
-            }
+            args.preamble_py,
         )
     }
 

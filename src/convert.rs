@@ -249,6 +249,8 @@ impl Convert {
         let magic_string_len = 2 + self.config.magic_comment_str.len();
         #[cfg(feature = "inst")]
         let mut within_inst = false;
+        #[cfg(feature = "inst")]
+        let mut inst_indent_space = 0usize;
         let mut inst_str = String::new();
         #[cfg(feature = "inst")]
         // print user-defined variables
@@ -301,6 +303,7 @@ impl Convert {
                         &mut stream,
                         &mut within_inst,
                         &mut inst_str,
+                        &mut inst_indent_space,
                     )?;
                     #[cfg(not(feature = "inst"))]
                     self.process_python_line(&line, 0, &mut stream)?;
@@ -327,6 +330,7 @@ impl Convert {
                         &mut stream,
                         &mut within_inst,
                         &mut inst_str,
+                        &mut inst_indent_space,
                     )?;
                     #[cfg(not(feature = "inst"))]
                     self.process_python_line(&line, py_indent_prior, &mut stream)?;

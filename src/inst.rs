@@ -27,23 +27,32 @@ impl Convert {
         stream: &mut W,
         within_inst: &mut bool,
         inst_str: &mut String,
+        inst_indent_space: &mut usize,
     ) -> Result<(), Box<dyn Error>> {
         match self.inst_state(line) {
             InstState::Begin => {
+                // calculate the space before the <INST>
+                // and print the Python code before the <INST>
+                let all_space = &line.len() - line.trim_start().len();
+                if all_space < py_indent_prior {
+                    return Err("Indentation error: <INST> is not properly indented.".into());
+                }
+                *inst_indent_space = all_space - py_indent_prior;
                 if *within_inst {
                     return Err("Nested <INST> is not allowed.".into());
                 }
                 *within_inst = true;
-                writeln!(stream, "print('// INST')")?;
+                writeln!(stream, "{}print('// INST')", " ".repeat(*inst_indent_space))?;
             }
             InstState::End => {
                 if !*within_inst {
                     return Err("Encountering </INST> with no <INST> to end.".into());
                 }
                 *within_inst = false;
-                self.print_inst(stream, inst_str)?;
+                self.print_inst(stream, inst_str, *inst_indent_space)?;
                 inst_str.clear();
                 writeln!(stream, "print('// END of INST')")?;
+                *inst_indent_space = 0;
             }
             _ => {
                 let useful_str = utf8_slice::from(&line, py_indent_prior);
@@ -71,16 +80,25 @@ impl Convert {
         re.replace_all(inst_str, "__group_$1:$2\n").to_string()
     }
 
-    fn inst_group_print_to_dot_inst(inst_str: &str) -> String {
+    fn inst_group_print_to_dot_inst(inst_str: &str, inst_indent_space: usize) -> String {
         let re = Regex::new(r"__group_\w+:\s*(.*)[\r\n$]").unwrap();
         re.replace_all(
             inst_str,
-            "''')\n_inst_file.write(f'{_inst_var_map($1)}')\n_inst_file.write(f'''",
+            format!(
+                "''')\n{}_inst_file.write(f'{{_inst_var_map($1)}}')\n{}_inst_file.write(f'''",
+                " ".repeat(inst_indent_space),
+                " ".repeat(inst_indent_space)
+            ),
         )
         .to_string()
     }
 
-    fn print_inst<W: Write>(&self, stream: &mut W, inst_str: &str) -> Result<(), Box<dyn Error>> {
+    fn print_inst<W: Write>(
+        &self,
+        stream: &mut W,
+        inst_str: &str,
+        inst_indent_space: usize,
+    ) -> Result<(), Box<dyn Error>> {
         let inst_map: serde_yaml::Value =
             serde_yaml::from_str(&self.apply_protected_verilog_regex(
                 Self::apply_protected_inst_group_regex(inst_str).as_str(),
@@ -89,9 +107,10 @@ impl Convert {
         inst_str_parsed = Self::inst_group_print_to_dot_inst(
             self.undo_protected_brackets(inst_str_parsed.as_str())
                 .as_str(),
+            inst_indent_space,
         );
         // print to .inst
-        writeln!(stream, "_inst_file.write(f'''{}''')", inst_str_parsed)?;
+        writeln!(stream, "{}_inst_file.write(f'''{}''')", " ".repeat(inst_indent_space), inst_str_parsed)?;
         // print to .v
         match inst_map["module"].as_str() {
             Some(module) => writeln!(
@@ -128,8 +147,12 @@ impl Convert {
                             } else {
                                 ","
                             },
-                            self.escape_single_quote(self.undo_protected_brackets(key_str).as_str()),
-                            self.escape_single_quote(self.undo_protected_brackets(value_str).as_str())
+                            self.escape_single_quote(
+                                self.undo_protected_brackets(key_str).as_str()
+                            ),
+                            self.escape_single_quote(
+                                self.undo_protected_brackets(value_str).as_str()
+                            )
                         )?;
                     }
                 } else {
