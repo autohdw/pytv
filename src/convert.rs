@@ -281,7 +281,7 @@ impl Convert {
                 "    s = ['  .%s(%s)' % tuple for tuple in tuples]\n",
                 "    return ('' if first_port else ',\\n') + ',\\n'.join(s)\n\n",
                 "def _verilog_vparams_var_map(tuples, first_vparam):\n",
-                "    s = ['\\n  parameter %s = %s' % tuple for tuple in tuples]\n",
+                "    s = ['\\n  .%s(%s)' % tuple for tuple in tuples]\n",
                 "    return ('#(' if first_vparam else ',') + ','.join(s)\n",
             ),
             self.output_inst_file_name()

@@ -140,7 +140,7 @@ impl Convert {
                     } else {
                         writeln!(
                             stream,
-                            "print(f'{}\\n  parameter {} = {}', end='')",
+                            "print(f'{}\\n  .{}({})', end='')",
                             if first_vparam {
                                 first_vparam = false;
                                 "#("
@@ -161,7 +161,7 @@ impl Convert {
             }
         }
         if !first_vparam {
-            writeln!(stream, "print(f')')")?;
+            writeln!(stream, "print(')')")?;
         }
         match inst_map["name"].as_str() {
             Some(name) => writeln!(
