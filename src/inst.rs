@@ -51,7 +51,7 @@ impl Convert {
                 *within_inst = false;
                 self.print_inst(stream, inst_str, *inst_indent_space)?;
                 inst_str.clear();
-                writeln!(stream, "print('// END of INST')")?;
+                writeln!(stream, "{}print('// END of INST')", " ".repeat(*inst_indent_space))?;
                 *inst_indent_space = 0;
             }
             _ => {
@@ -115,7 +115,8 @@ impl Convert {
         match inst_map["module"].as_str() {
             Some(module) => writeln!(
                 stream,
-                "print(f'{}', end='')",
+                "{}print(f'{}', end='')",
+                " ".repeat(inst_indent_space),
                 self.undo_protected_brackets(module)
             )?,
             None => return Err("No module name found in the <INST>.".into()),
@@ -128,7 +129,8 @@ impl Convert {
                     if key_str.starts_with("__group_") {
                         writeln!(
                             stream,
-                            "print(_verilog_vparams_var_map({}, {}), end='')",
+                            "{}print(_verilog_vparams_var_map({}, {}), end='')",
+                            " ".repeat(inst_indent_space),
                             value_str,
                             if first_vparam {
                                 first_vparam = false;
@@ -140,7 +142,8 @@ impl Convert {
                     } else {
                         writeln!(
                             stream,
-                            "print(f'{}\\n  .{}({})', end='')",
+                            "{}print(f'{}\\n  .{}({})', end='')",
+                            " ".repeat(inst_indent_space),
                             if first_vparam {
                                 first_vparam = false;
                                 "#("
@@ -161,12 +164,13 @@ impl Convert {
             }
         }
         if !first_vparam {
-            writeln!(stream, "print(')')")?;
+            writeln!(stream, "{}print(')')", " ".repeat(inst_indent_space))?;
         }
         match inst_map["name"].as_str() {
             Some(name) => writeln!(
                 stream,
-                "print(f' {} (')",
+                "{}print(f' {} (')",
+                " ".repeat(inst_indent_space),
                 self.undo_protected_brackets(name)
             )?,
             None => return Err("No instantiation name found in the <INST>.".into()),
@@ -179,7 +183,8 @@ impl Convert {
                     if key_str.starts_with("__group_") {
                         writeln!(
                             stream,
-                            "print(_verilog_ports_var_map({}, {}), end='')",
+                            "{}print(_verilog_ports_var_map({}, {}), end='')",
+                            " ".repeat(inst_indent_space),
                             value_str,
                             if first_port {
                                 first_port = false;
@@ -191,7 +196,8 @@ impl Convert {
                     } else {
                         writeln!(
                             stream,
-                            "print(f'{}  .{}({})', end='')",
+                            "{}print(f'{}  .{}({})', end='')",
+                            " ".repeat(inst_indent_space),
                             if first_port {
                                 first_port = false;
                                 ""
@@ -209,7 +215,7 @@ impl Convert {
                 }
             }
         }
-        writeln!(stream, "print(f'\\n);')")?;
+        writeln!(stream, "{}print(f'\\n);')", " ".repeat(inst_indent_space))?;
 
         Ok(())
     }
