@@ -144,8 +144,27 @@ impl Config {
         )
     }
 
+    /// Returns the default magic comment string used to identify template sections in the input file.
+    ///
+    /// # Example
+    /// ```
+    /// use pytv::Config;
+    /// let magic_comment_str = Config::default_magic_comment_str();
+    /// assert_eq!(magic_comment_str, "!");
+    /// ```
+    pub fn default_magic_comment_str() -> String {
+        "!".to_string()
+    }
+
     /// Returns the default regular expression used to match template sections in the input file.
-    fn default_template_re() -> Regex {
+    /// 
+    /// # Example
+    /// ```
+    /// use pytv::Config;
+    /// let re = Config::default_template_re();
+    /// assert_eq!(re.is_match("`test`"), true);
+    /// ```
+    pub fn default_template_re() -> Regex {
         Regex::new(r"`([^`]+)`").unwrap()
     }
 }
