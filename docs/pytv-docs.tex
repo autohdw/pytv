@@ -1,0 +1,39 @@
+\documentclass{article}
+\usepackage{cite}
+\usepackage[hidelinks]{hyperref}
+
+\newcommand{\pytvversion}{0.5.6}
+
+\title{PyTV: Python Templated Verilog}
+\author{Wuqiong Zhao}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  PyTV (Python Templated Verilog)%
+  \footnote{This is the documentation to PyTV version \texttt{\pytvversion{}}.}
+  is a Rust library and binary tool that extends Verilog with Python templating.
+\end{abstract}
+
+\tableofcontents
+
+\section{Introduction}\label{sec:introduction}
+\input{sections/introduction}
+
+\section{Installation}\label{sec:installation}
+\input{sections/installation}
+
+\section{Syntax Specifications}\label{sec:syntax}
+\input{sections/syntax}
+
+\bibliographystyle{IEEEtran}
+\phantomsection
+\addcontentsline{toc}{section}{References}
+\bgroup
+\small
+\bibliography{IEEEabrv, ref}
+\egroup
+
+\end{document}

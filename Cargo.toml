@@ -3,12 +3,13 @@ name = "pytv"
 description = "Python Templated Verilog"
 repository = "https://github.com/autohdw/pytv"
 authors = ["Teddy van Jerry <me@teddy-van-jerry.org>"]
-version = "0.5.5"
+version = "0.5.6"
 readme = "README.md"
 license = "GPL-3.0-or-later"
 keywords = ["verilog", "python", "template", "generation"]
 categories = ["template-engine", "compilers", "development-tools"]
 exclude = [
+    "docs/*",
     "examples/*",
     "target/*",
     "Cargo.lock",
