@@ -1,0 +1,27 @@
+\subsection{Installation as a Rust Library}
+Similar to other library crates, PyTV can be installed as a Rust library by adding the following line to the \texttt{Cargo.toml} file of your project:
+\begin{verbatim}
+[dependencies]
+pytv = "0.5.6"
+\end{verbatim}
+The version number can be replaced with the desired version of PyTV.
+The library can then be imported into your Rust code by adding the following line:
+\begin{verbatim}
+extern crate pytv;
+\end{verbatim}
+
+You can also install PyTV using the \texttt{cargo} command:
+\begin{verbatim}
+cargo install pytv
+\end{verbatim}
+
+\subsection{Installation as a Binary Tool}
+PyTV can also be installed as a binary tool by running the following command:
+\begin{verbatim}
+cargo install pytv
+\end{verbatim}
+
+You can also build the binary tool from source by running the following command:
+\begin{verbatim}
+cargo build --release
+\end{verbatim}
