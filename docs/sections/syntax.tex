@@ -1,4 +1,21 @@
 \subsection{Basics: Python Line and Verilog Line}
+As a general rule, a \textit{Python line} is a line of Python code,
+and a \textit{Verilog line} is a line of Verilog code.
+A minimal example is shown below:
+
+\begin{verbatim}
+//! a = 1 + 2;            #  Python inline
+assign wire_`a` = wire_b; // Verilog line
+/*!
+b = a ** 2;               #  Python block
+*/
+\end{verbatim}
+
+The syntax rule can be summarized as follows:
+\begin{itemize}
+  \item An \textit{inline Python line} starts with \texttt{//!}.
+\end{itemize}
+
 
 \subsection{Indentation}
 

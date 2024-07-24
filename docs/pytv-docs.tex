@@ -1,7 +1,11 @@
 \documentclass{article}
 \usepackage{lmodern}
+\usepackage{upquote}
 \usepackage{cite}
+\usepackage{tikz}
 \usepackage[hidelinks, pdfusetitle]{hyperref}
+
+\usetikzlibrary{positioning}
 
 \newcommand{\pytvversion}{0.5.6}
 
@@ -14,8 +18,14 @@
 
 \begin{abstract}
   PyTV (Python Templated Verilog)%
-  \footnote{This is the documentation to PyTV version \texttt{\pytvversion{}}.}
+  \footnote{This is the documentation to PyTV version \texttt{\pytvversion{}}.
+  Digital version of this document is available at \url{https://go.wqzhao.org/pytv-docs}.}
   is a Rust library and binary tool that extends Verilog with Python templating.
+  Utilizing the flexibility of Python,
+  PyTV allows users to write Verilog code with Python syntax and features
+  including if statements, for loops, function definitions, etc.
+  Moreover, PyTV supports instantiation of modules with complex parameters,
+  and enables hierarchy extraction.
 \end{abstract}
 
 \tableofcontents
@@ -26,11 +36,21 @@
 \section{Installation}\label{sec:installation}
 \input{sections/installation}
 
+\section{Architecture}\label{sec:architecture}
+\input{sections/architecture}
+
 \section{Syntax Specifications}\label{sec:syntax}
 \input{sections/syntax}
 
+\section{Usage}\label{sec:usage}
+\input{sections/usage}
+
 \section{Limitations}\label{sec:limitations}
 \input{sections/limitations}
+
+\section*{Further Readings}
+\addcontentsline{toc}{section}{Further Readings}
+\input{sections/ads}
 
 \section*{Acknowledgments}
 \input{sections/acknowledgments}

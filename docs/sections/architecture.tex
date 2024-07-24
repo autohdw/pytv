@@ -1,0 +1,28 @@
+The architecture (generation process) of PyTV is illustrated in Figure~\ref{fig:architecture}.
+
+\begin{figure}[htbp]
+  \centering
+  \begin{tikzpicture}[
+    , thick
+    , font = \sffamily
+    , n/.style = {
+      , draw
+      , fill = gray!10
+      , minimum width = 14mm
+      , minimum height = 8mm
+      , font = \ttfamily
+      , text height = 1.3ex
+    }
+    , node distance = 8mm and 15mm
+  ]
+    \node (pytv) [n] {.pytv};
+    \node (v-py) [n, right = of pytv] {.v.py};
+    \node (v) [n, right = of v-py] {.v};
+    \node (inst) [n, below = of v-py] {.inst};
+    \draw [-latex] (pytv) -- (v-py);
+    \draw [-latex] (v-py) -- (v) node [midway, above] {\small python3};
+    \draw [-latex] (v-py) -- (inst) node [midway, right] {\small python3};
+  \end{tikzpicture}
+  \caption{Architecture of PyTV.}
+  \label{fig:architecture}
+\end{figure}
