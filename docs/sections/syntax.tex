@@ -14,9 +14,42 @@ b = a ** 2;               #  Python block
 The syntax rule can be summarized as follows:
 \begin{itemize}
   \item An \textit{inline Python line} starts with \texttt{//!}.
+  \item A \textit{Python block} starts with \texttt{/*!} and ends with \texttt{*/}.
+  \item Otherwise, it is a \textit{Verilog line}.
+  In the Verilog line, contents in backticks (\verb|`|) are treated as Python variables,
+  and are calculated inline.
 \end{itemize}
 
+Internally, a Python line will be copied to the generated \texttt{.v.py} file.
+A Verilog line will be a \texttt{print} statement,
+where contents in backticks (\verb|`|) are properly escaped and embedded in the format string.
 
 \subsection{Indentation}
+Because the generation framework is based on Python,
+indentation is important.
+The mixture of Python and Verilog code adds to the complexity.
+Therefore, the following rules are enforced.
+
+\textbf{Rule 1: same with Python.}
+The number of spaces for Python indentation is a fixed number as required by Python.
+It is recommended to use 4 spaces for Python indentation.
+
+\textbf{Rule 2: no preceding spaces.}
+For Python lines, no preceding spaces are allowed before the \texttt{//!}, \texttt{/*!}, or \texttt{*/}.
+Otherwise they are not recognized as Python lines or blocks.
+
+\textbf{Rule 3: first line decides for all.}
+
+\textbf{Rule 4: proceeding lines follow.}
+
+\textbf{Rule 5: ease with Verilog.}
+The indentation of Verilog lines do not matter.
+They will be printed as is.
+
+\textbf{Rule 6: no tabs are allowed.}
+Notably, tabs are strongly discouraged in PyTV, as it may lead to unexpected behavior due to indentation mismatch.
+Always use spaces for indentation.
 
 \subsection{Instantiation}
+One important feature of PyTV is its capability to instantiate modules with complex parameters,
+and to enable hierarchy extraction.
