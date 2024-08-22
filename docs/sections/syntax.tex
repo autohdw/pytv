@@ -53,3 +53,27 @@ Always use spaces for indentation.
 \subsection{Instantiation}
 One important feature of PyTV is its capability to instantiate modules with complex parameters,
 and to enable hierarchy extraction.
+The instantiation syntax is started by \texttt{<INST>} and ended by \texttt{</INST>}, like XML tags.
+Inside the instantiation block, the YML syntax is adoped.
+To distinguish the instantiation block from Verilog code,
+it must be embadded in a Python block.
+
+One simple example is given below:
+\begin{verbatim}
+//! <INST>
+//! module: test_module
+//! name: test_inst_`var`
+//! ports:
+//!   port1: y
+//!   port2: z
+//! </INST>
+\end{verbatim}
+The following fields are required:
+\begin{table}
+  \caption{Required fields for instantiation.}
+\end{table}
+
+However, the intuitive format given above has limitations:
+
+Therefore, an extension is provided to support more complex instantiations.
+
