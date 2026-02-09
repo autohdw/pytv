@@ -27,7 +27,7 @@ macro = []
 
 [dependencies]
 clap = { version = "4.5.54", features = ["derive"] }
-regex = "1.12.2"
+regex = "1.12.3"
 utf8_slice = "1.0.0"
 serde = { version = "1.0", optional = true }
 serde_yaml = { version = "0.9", optional = true }
