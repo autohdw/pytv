@@ -15,7 +15,7 @@ cargo add pytv
 This updates \texttt{Cargo.toml} with a dependency entry similar to:
 \begin{verbatim}
 [dependencies]
-pytv = "0.5.6"
+pytv = "0.6.0"
 \end{verbatim}
 
 Default crate features include \texttt{inst} and \texttt{macro}.
@@ -38,6 +38,22 @@ After installation, verify command-line availability:
 \begin{verbatim}
 pytv --help
 \end{verbatim}
+
+\subsection{Install Python Binding (\texttt{tverilog})}
+The Python binding is provided in this repository under \texttt{tverilog/}.
+It requires Python packaging tools and a Rust toolchain to build the native bridge.
+
+A source install workflow is:
+\begin{verbatim}
+python -m pip install --upgrade pip maturin
+maturin build -m tverilog/native/Cargo.toml \
+  --release --interpreter python
+python -m pip install --force-reinstall \
+  tverilog/native/target/wheels/*.whl
+python -m pip install -e tverilog
+\end{verbatim}
+
+Details for API usage are described in Section~\ref{sec:tverilog}.
 
 \subsection{Build This Documentation}
 From the \texttt{docs/} directory:

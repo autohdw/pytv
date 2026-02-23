@@ -40,8 +40,7 @@ impl Default for Config {
 }
 
 /// Parse a single key-value pair
-fn parse_key_val(s: &str) -> Result<(String, String), Box<dyn Error>>
-{
+fn parse_key_val(s: &str) -> Result<(String, String), Box<dyn Error>> {
     let pos = s
         .find('=')
         .ok_or_else(|| format!("invalid KEY=value: no `=` found in `{}`", s))?;
@@ -85,7 +84,7 @@ struct Args {
     vars: Vec<String>,
     /// Preamble Python file
     #[arg(short, long = "preamble", value_name = "FILE")]
-    preamble_py: Option<String>
+    preamble_py: Option<String>,
 }
 
 impl Config {
@@ -116,7 +115,12 @@ impl Config {
     }
 
     /// Parses the command line arguments and returns a tuple of `Config` and `FileOptions`.
-    pub fn from_args() -> (Config, FileOptions, Option<Vec<(String, String)>>, Option<String>) {
+    pub fn from_args() -> (
+        Config,
+        FileOptions,
+        Option<Vec<(String, String)>>,
+        Option<String>,
+    ) {
         let args = Args::parse();
         let vars = args
             .vars
@@ -157,7 +161,7 @@ impl Config {
     }
 
     /// Returns the default regular expression used to match template sections in the input file.
-    /// 
+    ///
     /// # Example
     /// ```
     /// use pytv::Config;

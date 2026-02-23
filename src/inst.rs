@@ -51,7 +51,11 @@ impl Convert {
                 *within_inst = false;
                 self.print_inst(stream, inst_str, *inst_indent_space)?;
                 inst_str.clear();
-                writeln!(stream, "{}print('// END of INST')", " ".repeat(*inst_indent_space))?;
+                writeln!(
+                    stream,
+                    "{}print('// END of INST')",
+                    " ".repeat(*inst_indent_space)
+                )?;
                 *inst_indent_space = 0;
             }
             _ => {
@@ -110,7 +114,12 @@ impl Convert {
             inst_indent_space,
         );
         // print to .inst
-        writeln!(stream, "{}_inst_file.write(f'''{}''')", " ".repeat(inst_indent_space), inst_str_parsed)?;
+        writeln!(
+            stream,
+            "{}_inst_file.write(f'''{}''')",
+            " ".repeat(inst_indent_space),
+            inst_str_parsed
+        )?;
         // print to .v
         match inst_map["module"].as_str() {
             Some(module) => writeln!(

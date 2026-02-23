@@ -1,0 +1,15 @@
+[package]
+name = "tverilog-core"
+version = "0.6.0"
+edition = "2021"
+description = "Native bridge for tverilog"
+license = "GPL-3.0-or-later"
+publish = false
+
+[lib]
+name = "_core"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.23", features = ["extension-module"] }
+pytv = { path = "../.." }

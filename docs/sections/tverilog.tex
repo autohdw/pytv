@@ -1,0 +1,116 @@
+\texttt{tverilog} is an API-oriented Python binding for PyTV.
+It is designed for Python-driven generation flows where template conversion and execution
+are controlled from Python code instead of invoking the \texttt{pytv} CLI.
+
+\texttt{tverilog} performs conversion through an internal Rust-backed extension bridge.
+As a result, conversion does not require invoking the \texttt{pytv} binary executable.
+The module \texttt{tverilog.\_core} is internal and may change without notice.
+
+\subsection{Public API}
+The user-facing API is a single function:
+\begin{verbatim}
+from tverilog import generate
+\end{verbatim}
+Call \texttt{generate(...)} directly in user code.
+
+Key parameters are summarized in Table~\ref{tab:tverilog-generate-args}.
+\begin{table}[htbp]
+\centering
+\small
+\caption{\texttt{generate(...)} parameters in \texttt{tverilog}.}
+\label{tab:tverilog-generate-args}
+\begin{tabularx}{\linewidth}{@{} l l L @{}}
+\toprule
+\textbf{Parameter} & \textbf{Type} & \textbf{Meaning} \\
+\midrule
+\texttt{input\_file} & path & Input \texttt{.pytv} template path. \\
+\texttt{output\_file} & path or \texttt{None} & Optional output Verilog path/base. If omitted, output names are derived from \texttt{input\_file}. \\
+\texttt{magic} & string & Magic marker used after \texttt{//} and \texttt{/*} (default \texttt{!}). \\
+\texttt{tab\_size} & int & Tab width used for tab-to-space normalization in conversion (default 4). \\
+\texttt{vars} & mapping or \texttt{None} & Optional variable map injected into generated Python as name/expression pairs. \\
+\texttt{preamble} & path or \texttt{None} & Optional Python preamble script prepended before template body conversion. \\
+\texttt{python\_path} & path or \texttt{None} & Execution mode selector: \texttt{None} means inline execution in current interpreter; non-\texttt{None} runs generated script in a subprocess with that interpreter. \\
+\texttt{use\_context} & bool & Inline mode only. If \texttt{True}, caller globals/locals snapshots are merged into the execution namespace. \\
+\texttt{context} & mapping or \texttt{None} & Inline mode only. Explicit namespace merged after captured context (explicit keys override collisions). \\
+\texttt{keep\_generated\_py} & bool & If \texttt{False} (default), remove generated \texttt{.v.py} on success. \\
+\bottomrule
+\end{tabularx}
+\normalsize
+\end{table}
+
+Execution behavior is shown in Table~\ref{tab:tverilog-modes}.
+\begin{table}[htbp]
+\centering
+\small
+\caption{Execution modes in \texttt{tverilog.generate(...)}.}
+\label{tab:tverilog-modes}
+\begin{tabularx}{\linewidth}{@{} l l L L @{}}
+\toprule
+\textbf{Mode} & \textbf{Trigger} & \textbf{Execution} & \textbf{Context Handling} \\
+\midrule
+\texttt{inline} & \texttt{python\_path=None} & Compile preflight, then \texttt{exec(...)} in the current interpreter; stdout redirected to output \texttt{.v}. & \texttt{use\_context} and \texttt{context} are active. \\
+\texttt{subprocess} & \texttt{python\_path} provided & Materialize script and run \texttt{[python\_path, script.py]} in a subprocess; stdout redirected to output \texttt{.v}. & \texttt{use\_context} and \texttt{context} are ignored. \\
+\bottomrule
+\end{tabularx}
+\normalsize
+\end{table}
+
+The return type is \texttt{GenerateResult}, containing:
+\begin{itemize}
+  \item \texttt{input\_file}, \texttt{output\_file}, and \texttt{inst\_file},
+  \item \texttt{generated\_py\_file} (or \texttt{None} when deleted after success),
+  \item \texttt{mode} and \texttt{python\_path\_used},
+  \item \texttt{context\_used} (whether caller context capture was active).
+\end{itemize}
+
+Raised exceptions are:
+\begin{itemize}
+  \item \texttt{TVerilogError} (base type),
+  \item \texttt{ConfigurationError},
+  \item \texttt{PytvConversionError},
+  \item \texttt{GeneratedExecutionError}.
+\end{itemize}
+
+\subsection{Examples}
+Inline execution using caller context (default \texttt{use\_context=True}):
+\begin{verbatim}
+from tverilog import generate
+
+WIDTH = 32
+result = generate(
+    "examples/test.pytv",
+    output_file="build/test.v",
+)
+print(result.output_file)
+\end{verbatim}
+
+Inline execution with isolated namespace and explicit context:
+\begin{verbatim}
+from tverilog import generate
+
+result = generate(
+    "examples/test.pytv",
+    output_file="build/test.v",
+    use_context=False,
+    context={"WIDTH": 64, "ENABLE_RST": True},
+)
+\end{verbatim}
+
+Subprocess execution with explicit interpreter:
+\begin{verbatim}
+from tverilog import generate
+
+result = generate(
+    "examples/test.pytv",
+    output_file="build/test.v",
+    python_path="/usr/bin/python3",
+)
+\end{verbatim}
+
+\subsection{Operational Notes}
+\begin{itemize}
+  \item Generated script cleanup: by default (\texttt{keep\_generated\_py=False}),
+  successful execution removes \texttt{.v.py}. Set \texttt{True} to keep the generated script.
+  \item On conversion, syntax, or runtime failures, generated script artifacts are preserved for debugging.
+  \item Subprocess mode provides interpreter selection and isolation, but it cannot reuse the caller's live Python context.
+\end{itemize}

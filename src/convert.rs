@@ -3,6 +3,7 @@ use crate::FileOptions;
 use std::error::Error;
 use std::io::{Result as IoResult, Write};
 use std::path;
+use std::path::PathBuf;
 use std::result::Result;
 
 /// Represents a converter that converts PyTV script to Python script to generate Verilog.
@@ -15,6 +16,17 @@ pub struct Convert {
     file_options: FileOptions,
     vars: Option<Vec<(String, String)>>,
     preamble_py: Option<String>,
+}
+
+/// Canonical output artifact paths derived from input/output options.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OutputPaths {
+    /// Output Verilog file path.
+    pub verilog_file: PathBuf,
+    /// Generated Python script path.
+    pub python_script_file: PathBuf,
+    /// Output instantiation metadata path.
+    pub inst_file: PathBuf,
 }
 
 #[derive(Debug, PartialEq)]
@@ -65,36 +77,68 @@ impl Convert {
         std::fs::File::create(&self.output_python_file_name())
     }
 
-    /// Generates the output file name based on the input file name and configuration.
+    fn derive_output_file_name(input: &str, output: Option<&str>) -> PathBuf {
+        let output = output.map(|s| s.to_string()).unwrap_or_else(|| {
+            let mut derived = input.to_string();
+            // change extension to .v if there is extension
+            let ext = path::Path::new(&derived).extension().unwrap_or_default();
+            if ext.is_empty() {
+                derived.push_str(".v");
+            } else {
+                derived = derived.replace(ext.to_str().unwrap(), "v");
+            }
+            derived
+        });
+        PathBuf::from(output.replace("\\", "/"))
+    }
+
+    fn output_paths_from_options(&self) -> OutputPaths {
+        Self::output_paths_from_strings(
+            &self.file_options.input,
+            self.file_options.output.as_deref(),
+        )
+    }
+
+    fn output_paths_from_strings(input: &str, output: Option<&str>) -> OutputPaths {
+        let verilog_file = Self::derive_output_file_name(input, output);
+        let python_script_file = PathBuf::from(format!("{}.py", verilog_file.to_string_lossy()));
+        let inst_file = PathBuf::from(format!("{}.inst", verilog_file.to_string_lossy()));
+        OutputPaths {
+            verilog_file,
+            python_script_file,
+            inst_file,
+        }
+    }
+
+    /// Resolves canonical output artifact paths from input/output options.
+    pub fn output_paths(input: &path::Path, output: Option<&path::Path>) -> OutputPaths {
+        let input = input.to_string_lossy().to_string();
+        let output = output.map(|v| v.to_string_lossy().to_string());
+        Self::output_paths_from_strings(&input, output.as_deref())
+    }
+
+    /// Generates the output Verilog file path based on file options.
     fn output_file_name(&self) -> String {
-        self.file_options
-            .output
-            .clone()
-            .unwrap_or_else(|| {
-                if self.file_options.output.is_some() {
-                    return self.file_options.input.clone();
-                }
-                let mut output = self.file_options.input.clone();
-                // change extension to .v if there is extension
-                let ext = path::Path::new(&output).extension().unwrap_or_default();
-                if ext.is_empty() {
-                    output.push_str(".v");
-                } else {
-                    output = output.replace(ext.to_str().unwrap(), "v");
-                }
-                output
-            })
-            .replace("\\", "/")
+        self.output_paths_from_options()
+            .verilog_file
+            .to_string_lossy()
+            .to_string()
     }
 
     /// Generates the output Python file name based on the input file name and configuration.
     fn output_python_file_name(&self) -> String {
-        self.output_file_name() + ".py"
+        self.output_paths_from_options()
+            .python_script_file
+            .to_string_lossy()
+            .to_string()
     }
 
     /// Generates the output instantiation file name based on the input file name and configuration.
     fn output_inst_file_name(&self) -> String {
-        self.output_file_name() + ".inst"
+        self.output_paths_from_options()
+            .inst_file
+            .to_string_lossy()
+            .to_string()
     }
 
     fn switch_line_type(&self, line_type: &mut LineType, line: &str) {
@@ -347,6 +391,13 @@ impl Convert {
         Ok(())
     }
 
+    /// Renders the generated Python script as a string.
+    pub fn render_python_script(&self) -> Result<String, Box<dyn Error>> {
+        let mut stream = Vec::<u8>::new();
+        self.convert(&mut stream)?;
+        Ok(String::from_utf8(stream)?)
+    }
+
     /// Converts the code and writes the converted code to a file.
     ///
     /// With default `Config`, the output will be a Python file.
@@ -363,6 +414,7 @@ impl Convert {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     #[test]
     fn test_pre_process_line() {
@@ -418,5 +470,51 @@ mod tests {
         assert_eq!(line_type, LineType::None);
         convert.switch_line_type(&mut line_type, "// Verilog comment");
         assert_eq!(line_type, LineType::Verilog);
+    }
+
+    #[test]
+    fn test_output_paths_default_with_ext() {
+        let paths = Convert::output_paths(Path::new("examples/test.pytv"), None);
+        assert_eq!(paths.verilog_file, Path::new("examples/test.v"));
+        assert_eq!(paths.python_script_file, Path::new("examples/test.v.py"));
+        assert_eq!(paths.inst_file, Path::new("examples/test.v.inst"));
+    }
+
+    #[test]
+    fn test_output_paths_default_without_ext() {
+        let paths = Convert::output_paths(Path::new("examples/test"), None);
+        assert_eq!(paths.verilog_file, Path::new("examples/test.v"));
+        assert_eq!(paths.python_script_file, Path::new("examples/test.v.py"));
+        assert_eq!(paths.inst_file, Path::new("examples/test.v.inst"));
+    }
+
+    #[test]
+    fn test_output_paths_override_and_normalize_separator() {
+        let paths = Convert::output_paths(
+            Path::new("examples/test.pytv"),
+            Some(Path::new("build\\out.v")),
+        );
+        assert_eq!(paths.verilog_file, Path::new("build/out.v"));
+        assert_eq!(paths.python_script_file, Path::new("build/out.v.py"));
+        assert_eq!(paths.inst_file, Path::new("build/out.v.inst"));
+    }
+
+    #[test]
+    fn test_render_python_script_contains_output_print() {
+        let mut input = std::env::temp_dir();
+        input.push(format!("pytv_render_{}.pytv", std::process::id()));
+        std::fs::write(&input, "wire `1+2`;\n").unwrap();
+        let convert = Convert::new(
+            Config::default(),
+            FileOptions {
+                input: input.to_string_lossy().to_string(),
+                output: None,
+            },
+            None,
+            None,
+        );
+        let script = convert.render_python_script().unwrap();
+        assert!(script.contains("print(f'wire {1+2};')"));
+        let _ = std::fs::remove_file(input);
     }
 }

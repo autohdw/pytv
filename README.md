@@ -20,6 +20,12 @@ If you want to install the `pytv` binary, run
 cargo install pytv
 ```
 
+### Python Binding (`tverilog`)
+An API-only Python binding is available in `tverilog/`.
+Use it from Python as `from tverilog import generate`.
+It uses a native extension bridge internally, so conversion does not require invoking the `pytv` CLI binary.
+See `tverilog/README.md` for installation and usage details.
+
 ## Features
 ### Python Template
 This is the basic feature of this package.

@@ -1,12 +1,12 @@
 //! Python Templated Verilog
-//! 
+//!
 //! # Generation Process
 //! ```txt
 //! .pytv ----> .v.py --+-> .v
 //!                     |
 //!                     +-> .inst
 //! ```
-//! 
+//!
 //! # Examples
 //! ```txt
 //! //! a = 1 + 2;            #  Python inline
@@ -16,7 +16,12 @@
 //! */
 //! ```
 //! The magic comment string can be configured (`!` as default).
-//! 
+//!
+//! # Interfaces
+//! - Rust crate API (`pytv`)
+//! - CLI binary (`pytv`)
+//! - Python binding (`tverilog`, in repository directory `tverilog/`)
+//!
 //! # Related Auto Generator Projects
 //! - **FLAMES**: template-based C++ library for Vitis HLS
 //!   [[website](https://flames.autohdw.com)]
@@ -36,3 +41,4 @@ mod inst;
 pub use config::Config;
 pub use config::FileOptions;
 pub use convert::Convert;
+pub use convert::OutputPaths;

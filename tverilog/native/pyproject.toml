@@ -1,0 +1,12 @@
+[build-system]
+requires = ["maturin>=1.7,<2"]
+build-backend = "maturin"
+
+[project]
+name = "tverilog-core"
+version = "0.6.0"
+description = "Native extension for tverilog"
+requires-python = ">=3.9"
+
+[tool.maturin]
+module-name = "tverilog._core"

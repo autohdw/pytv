@@ -5,6 +5,12 @@
 *.py
 *.inst
 !*_preamble.py
+!tverilog/**/*.py
+/tverilog/.pytest_cache/
+/tverilog/**/__pycache__/
+/tverilog/*.egg-info/
+/tverilog/native/target/
+/tverilog/native/Cargo.lock
 
 # macOS
 .DS_Store
