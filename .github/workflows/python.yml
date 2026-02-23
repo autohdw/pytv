@@ -33,7 +33,7 @@ jobs:
       - name: Build and install tverilog native extension
         run: |
           maturin build -m tverilog/native/Cargo.toml --release --interpreter python
-          python -m pip install --force-reinstall tverilog/native/target/wheels/*.whl
+          python -c 'import glob, os, subprocess, sys; wheels = sorted(glob.glob(os.path.join("tverilog", "native", "target", "wheels", "*.whl"))); print("Wheels:", wheels); assert wheels, "No wheel files found"; subprocess.check_call([sys.executable, "-m", "pip", "install", "--force-reinstall", *wheels])'
 
       - name: Install tverilog Python package
         run: python -m pip install -e tverilog
