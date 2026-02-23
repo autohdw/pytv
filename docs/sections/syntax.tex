@@ -1,79 +1,127 @@
-\subsection{Basics: Python Line and Verilog Line}
-As a general rule, a \textit{Python line} is a line of Python code,
-and a \textit{Verilog line} is a line of Verilog code.
-A minimal example is shown below:
+\subsection{Line Types and Markers}
+PyTV processes source code line by line.
+After leading whitespace is ignored, each line is classified as:
+\begin{itemize}
+  \item \textbf{Inline Python line}: starts with \texttt{//<magic>} (default \texttt{//!}).
+  \item \textbf{Python block line}: after a line starting with \texttt{/*<magic>} (default \texttt{/*!}),
+  all following lines are Python until a line whose trimmed text is exactly \texttt{*/}.
+  Text on the opener line itself is not emitted as Python code.
+  \item \textbf{Verilog line}: any line not matched by the two rules above.
+\end{itemize}
 
+A minimal example:
 \begin{verbatim}
-//! a = 1 + 2;            #  Python inline
-assign wire_`a` = wire_b; // Verilog line
+//! a = 1 + 2
+assign wire_`a` = wire_b;
 /*!
-b = a ** 2;               #  Python block
+b = a ** 2
 */
 \end{verbatim}
 
-The syntax rule can be summarized as follows:
+The magic marker is configurable by CLI option \texttt{-m/--magic}.
+Leading whitespace before markers is allowed.
+
+\subsection{Backtick Expression Substitution}
+In Verilog lines, content inside backticks (\verb|`...`|) is treated as a Python expression
+and injected through Python f-string formatting in the generated \texttt{.v.py}.
+Matching uses a one-line regex equivalent to \verb|`([^`]+)`|,
+so nested/multiline backtick expressions are not supported.
+For example:
+\begin{verbatim}
+//! w = 16
+input [`w-1`:0] data_in;
+\end{verbatim}
+renders as:
+\begin{verbatim}
+input [15:0] data_in;
+\end{verbatim}
+
+PyTV escapes braces and single quotes while constructing the generated Python string,
+so literal \verb|{| and \verb|}| in Verilog text are preserved.
+
+\subsection{Indentation and Control Flow}
+Since Python controls generation, indentation semantics follow Python execution:
 \begin{itemize}
-  \item An \textit{inline Python line} starts with \texttt{//!}.
-  \item A \textit{Python block} starts with \texttt{/*!} and ends with \texttt{*/}.
-  \item Otherwise, it is a \textit{Verilog line}.
-  In the Verilog line, contents in backticks (\verb|`|) are treated as Python variables,
-  and are calculated inline.
+  \item Each input line has trailing whitespace removed.
+  \item Tabs are converted to spaces using \texttt{-t/--tab-size} (default 4).
+  \item For inline Python lines, the first non-empty inline Python line defines a baseline indentation.
+  \item Subsequent inline Python lines must keep this baseline, otherwise conversion fails.
+  \item In Python block mode, block contents are emitted as Python code (block delimiters are not emitted).
+  \item Verilog lines are transformed into \texttt{print(...)} statements at the current Python indentation depth.
 \end{itemize}
 
-Internally, a Python line will be copied to the generated \texttt{.v.py} file.
-A Verilog line will be a \texttt{print} statement,
-where contents in backticks (\verb|`|) are properly escaped and embedded in the format string.
+Practical consequence:
+any Python line ending with \texttt{:} (optionally followed by spaces or a comment)
+updates the indentation context for following generated Verilog print statements.
 
-\subsection{Indentation}
-Because the generation framework is based on Python,
-indentation is important.
-The mixture of Python and Verilog code adds to the complexity.
-Therefore, the following rules are enforced.
+In inline mode, a common way to close a control-flow scope before more Verilog is:
+\begin{verbatim}
+//! for i in range(4):
+foo_`i`
+//! # return to baseline indentation
+bar
+\end{verbatim}
 
-\textbf{Rule 1: same with Python.}
-The number of spaces for Python indentation is a fixed number as required by Python.
-It is recommended to use 4 spaces for Python indentation.
+\subsection{User Variables and Preamble}
+CLI option \texttt{-v/--var KEY=VAL} injects user variables into generated Python before template processing.
+This is useful for build-system controlled feature flags and dimensions.
 
-\textbf{Rule 2: no preceding spaces.}
-For Python lines, no preceding spaces are allowed before the \texttt{//!}, \texttt{/*!}, or \texttt{*/}.
-Otherwise they are not recognized as Python lines or blocks.
+CLI option \texttt{-p/--preamble FILE} prepends a Python preamble file,
+allowing helper functions, imports, and shared constants.
 
-\textbf{Rule 3: first line decides for all.}
-
-\textbf{Rule 4: proceeding lines follow.}
-
-\textbf{Rule 5: ease with Verilog.}
-The indentation of Verilog lines do not matter.
-They will be printed as is.
-
-\textbf{Rule 6: no tabs are allowed.}
-Notably, tabs are strongly discouraged in PyTV, as it may lead to unexpected behavior due to indentation mismatch.
-Always use spaces for indentation.
-
-\subsection{Instantiation}
-One important feature of PyTV is its capability to instantiate modules with complex parameters,
-and to enable hierarchy extraction.
-The instantiation syntax is started by \texttt{<INST>} and ended by \texttt{</INST>}, like XML tags.
-Inside the instantiation block, the YML syntax is adoped.
-To distinguish the instantiation block from Verilog code,
-it must be embadded in a Python block.
-
-One simple example is given below:
+\subsection{Instantiation Blocks}
+Instantiation blocks are delimited by \texttt{<INST>} and \texttt{</INST>} inside Python regions.
+Their body uses YAML mapping syntax.
+The \texttt{<INST>} and \texttt{</INST>} markers must be standalone on their Python lines
+(except surrounding whitespace).
+A basic example:
 \begin{verbatim}
 //! <INST>
 //! module: test_module
-//! name: test_inst_`var`
+//! name: test_inst_`idx`
+//! vparams:
+//!   W: 32
 //! ports:
-//!   port1: y
-//!   port2: z
+//!   clk: clk
+//!   rst_n: rst_n
+//!   data: data_`idx`
 //! </INST>
 \end{verbatim}
-The following fields are required:
-\begin{table}
-  \caption{Required fields for instantiation.}
+
+Field definitions are summarized in Table~\ref{tab:inst-fields}.
+\begin{table}[htbp]
+\centering
+\small
+\caption{Fields in an \texttt{<INST>} block.}
+\label{tab:inst-fields}
+\begin{tabularx}{\linewidth}{@{} l c c X @{}}
+\toprule
+\textbf{Field} & \textbf{Required} & \textbf{Type} & \textbf{Meaning} \\
+\midrule
+\texttt{module} & Yes & scalar & Module name printed in Verilog and recorded in \texttt{.inst}. \\
+\texttt{name} & Yes & scalar & Instance name printed in Verilog and recorded in \texttt{.inst}. \\
+\texttt{vparams} & No & mapping & Verilog parameter map rendered as \texttt{\#(...)} and recorded in \texttt{.inst}. \\
+\texttt{ports} & No & mapping & Verilog port map rendered as \texttt{(...)} and recorded in \texttt{.inst}. \\
+\texttt{parameters} & No & mapping & Metadata-only field stored in \texttt{.inst}; it is not rendered into Verilog instantiation text. \\
+\bottomrule
+\end{tabularx}
+\normalsize
 \end{table}
 
-However, the intuitive format given above has limitations:
+\subsection{Dynamic Group Expansion in Instantiation}
+For \texttt{vparams} and \texttt{ports}, PyTV supports grouped expansion with keys prefixed by \texttt{!}
+(for example, \texttt{!auto:}):
+\begin{verbatim}
+//! dyn_ports = [("a", "sig_a"), ("b", "sig_b")]
+//! <INST>
+//! module: M
+//! name: u0
+//! ports:
+//!   !auto: dyn_ports
+//! </INST>
+\end{verbatim}
 
-Therefore, an extension is provided to support more complex instantiations.
-
+Here \texttt{dyn\_ports} is a Python list of 2-tuples \texttt{(name, value)}.
+At render time, PyTV expands the group into individual Verilog mappings and corresponding \texttt{.inst} entries.
+The group key after \texttt{!} should use word characters (\texttt{[A-Za-z0-9\_]}) for predictable parsing.
+\texttt{<INST>} blocks cannot be nested.

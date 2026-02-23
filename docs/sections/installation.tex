@@ -1,33 +1,46 @@
-\subsection{Installation as a Rust Library}
-Similar to other library crates, PyTV can be installed as a Rust library by adding the following line to the \texttt{Cargo.toml} file of your project:
+\subsection{Prerequisites}
+\begin{itemize}
+  \item Rust toolchain (\texttt{cargo}) for building or using the crate.
+  \item Python 3 in \texttt{PATH} for rendering \texttt{.v} and \texttt{.inst} from generated Python.
+\end{itemize}
+
+PyTV invokes \texttt{python3} on Linux/macOS and \texttt{python} on Windows.
+
+\subsection{Install as a Rust Library}
+Add PyTV to an existing Rust project:
+\begin{verbatim}
+cargo add pytv
+\end{verbatim}
+
+This updates \texttt{Cargo.toml} with a dependency entry similar to:
 \begin{verbatim}
 [dependencies]
 pytv = "0.5.6"
 \end{verbatim}
-The version number can be replaced with the desired version of PyTV.
-The library can then be imported into your Rust code by adding the following line:
-\begin{verbatim}
-extern crate pytv;
-\end{verbatim}
 
-You can also install PyTV using the \texttt{cargo} command:
-\begin{verbatim}
-cargo install pytv
-\end{verbatim}
+Default crate features include \texttt{inst} and \texttt{macro}.
+If needed, enable or disable them explicitly in \texttt{Cargo.toml}.
 
-\subsection{Installation as a Binary Tool}
-PyTV can also be installed as a binary tool by running the following command:
+\subsection{Install as a Binary Tool}
+Install from crates.io:
 \begin{verbatim}
 cargo install pytv
 \end{verbatim}
 
-You can also build the binary tool from source by running the following command:
+Build from source:
 \begin{verbatim}
 cargo build --release
 \end{verbatim}
+The compiled binary is available at \texttt{target/release/pytv}.
 
-\subsection{Dependencies}
-Note that the generation of Verilog and instantiation files requires the use of \textit{Python 3},
-so make sure that Python 3 is installed on your system, and accessible in the \texttt{PATH} environment variable.
-On Linux and macOS, \texttt{python3} is the command to invoke Python 3,
-while on Windows, it is \texttt{python}.
+\subsection{Validate the Installation}
+After installation, verify command-line availability:
+\begin{verbatim}
+pytv --help
+\end{verbatim}
+
+\subsection{Build This Documentation}
+From the \texttt{docs/} directory:
+\begin{verbatim}
+latexmk -pdf pytv-docs.tex
+\end{verbatim}

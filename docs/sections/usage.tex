@@ -1,11 +1,91 @@
-\subsection{Rust Library Usage}
-
-\textbf{Customization of the magic comment string.}
-
 \subsection{Binary Tool Usage}
+\subsubsection*{Quick Start}
+Generate only the intermediate Python script (\texttt{.v.py}):
+\begin{verbatim}
+pytv path/to/design.pytv
+\end{verbatim}
+
+Generate Verilog/\texttt{.inst} and keep \texttt{.v.py}:
+\begin{verbatim}
+pytv path/to/design.pytv --run-py
+\end{verbatim}
+
+Generate Verilog/\texttt{.inst} and delete \texttt{.v.py}:
+\begin{verbatim}
+pytv path/to/design.pytv --run-py-del
+\end{verbatim}
+
+Set an explicit output base file:
+\begin{verbatim}
+pytv path/to/design.pytv -o build/design.v -R
+\end{verbatim}
+
+\subsubsection*{Examples in This Repository}
+\begin{verbatim}
+cargo run -- examples/test.pytv -R
+cargo run -- examples/D1.pytv -R \
+  --preamble examples/D1_preamble.py
+\end{verbatim}
+
+\subsubsection*{Command-Line Options}
+Command-line options are summarized in Table~\ref{tab:cli-options}.
+\begin{table}[htbp]
+\centering
+\small
+\caption{PyTV command-line options.}
+\label{tab:cli-options}
+\begin{tabularx}{\linewidth}{@{} l X @{}}
+\toprule
+\textbf{Option} & \textbf{Description} \\
+\midrule
+\texttt{INPUT} & Input \texttt{.pytv} file (required positional argument). \\
+\texttt{-o, --output FILE} & Set output Verilog path/base. Derived \texttt{.v.py} and \texttt{.inst} names follow this base. \\
+\texttt{-r, --run-py} & Execute generated Python and keep \texttt{.v.py}. \\
+\texttt{-R, --run-py-del} & Execute generated Python and delete \texttt{.v.py} after success. \\
+\texttt{-t, --tab-size INT} & Tab width used when normalizing tab characters in input lines (default: 4). \\
+\texttt{-m, --magic STRING} & Magic marker string used after \texttt{//} and \texttt{/*} (default: \texttt{!}). \\
+\texttt{-v, --var KEY=VAL} & Inject Python variables; option can be repeated. \\
+\texttt{-p, --preamble FILE} & Prepend a Python preamble script before template conversion. \\
+\bottomrule
+\end{tabularx}
+\normalsize
+\end{table}
+
+\subsection{Rust Library Usage}
+PyTV can be integrated directly in Rust applications.
+The core types are \texttt{Config}, \texttt{FileOptions}, and \texttt{Convert}.
+
+\subsubsection*{Programmatic Conversion Example}
+\begin{verbatim}
+use pytv::{Config, Convert, FileOptions};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let config = Config::new(
+        "!".to_string(),
+        Config::default_template_re(),
+        true,  // run generated Python
+        true,  // delete .v.py after successful run
+        4,     // tab size
+    );
+
+    let files = FileOptions {
+        input: "examples/test.pytv".to_string(),
+        output: Some("build/test.v".to_string()),
+    };
+
+    let vars = Some(vec![
+        ("if_rst".to_string(), "True".to_string()),
+        ("if_en".to_string(), "False".to_string()),
+    ]);
+
+    let convert = Convert::new(config, files, vars, None);
+    convert.convert_to_file()?;
+    Ok(())
+}
+\end{verbatim}
 
 \subsection{VS Code Extension}
-A basic VS Code extension is provided to facilitate the usage of PyTV,
-which includes syntax highlighting.
-To install the extension, search for \texttt{pytv} in the VS Code extension marketplace.
-It is also available at \url{https://marketplace.visualstudio.com/items?itemName=Teddy-van-Jerry.pytv}.
+A VS Code extension with syntax highlighting is available for PyTV.
+Install by searching for \texttt{pytv} in the VS Code Marketplace,
+or visit the
+\href{https://marketplace.visualstudio.com/items?itemName=Teddy-van-Jerry.pytv}{VS Code Marketplace page}.

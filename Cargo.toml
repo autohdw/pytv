@@ -16,6 +16,8 @@ exclude = [
     ".github/*",
     ".vscode/*",
     ".DS_Store",
+    "AGENTS.md",
+    "CLAUDE.md",
     "private/*",
 ]
 edition = "2021"

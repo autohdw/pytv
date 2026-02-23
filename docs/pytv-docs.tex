@@ -3,17 +3,21 @@
 \usepackage{upquote}
 \usepackage{cite}
 \usepackage{tikz}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{parskip}
 \usepackage[hidelinks, pdfusetitle]{hyperref}
 
 \usetikzlibrary{positioning}
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
 
 \newcommand{\pytvversion}{0.5.6}
 
 \title{PyTV: Python Templated Verilog}
 \author{Wuqiong Zhao%
-  \thanks{The author was with Southeast University, Nanjing, China,
-  and is now with the University of California San Diego, La Jolla, CA, USA.
-  e-mail: \texttt{me@wqzhao.org}.}}
+  \thanks{The author is with the University of California San Diego, La Jolla, CA, USA.
+  e-mail: \texttt{wqzhao@ucsd.edu}.}}
 
 \begin{document}
 
@@ -21,13 +25,13 @@
 
 \begin{abstract}
   PyTV (Python Templated Verilog)%
-  \footnote{This is the documentation to PyTV version \texttt{\pytvversion{}}.
-  Digital version of this document is available at \url{https://go.wqzhao.org/pytv-docs}.}
+  \footnote{This is the documentation for PyTV version \texttt{\pytvversion{}}.
+  Latest digital version of this document is available at \url{https://go.wqzhao.org/pytv-docs}.}
   is a Rust library and binary tool that extends Verilog with Python templating.
-  Utilizing the flexibility of Python,
-  PyTV allows users to write Verilog code with Python syntax and features
-  including if statements, for loops, function definitions, etc.
-  Moreover, PyTV supports instantiation of modules with complex parameters,
+  By leveraging Python's flexibility,
+  PyTV allows users to write Verilog templates with Python control constructs,
+  including \texttt{if} statements, \texttt{for} loops, and function definitions.
+  PyTV also supports instantiation of modules with complex parameters
   and enables hierarchy extraction.
 \end{abstract}
 

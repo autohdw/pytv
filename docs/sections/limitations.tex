@@ -1,15 +1,29 @@
 \textit{\textbf{Important:}
-PyTV is designed for research and prototyping purposes,
-and is not intended for production use.}
+PyTV is intended for research, education, and rapid prototyping workflows.
+Production deployment requires additional validation and process controls.}
 
-\subsection{GPL-3.0 License: Be Open Source}
-PyTV is distributed under the GNU General Public License v3.0 (GPL-3.0).
-This license is chosen to ensure that the source code of PyTV remains open source.
-Works based on or relied on PyTV must also be open source.
+\subsection{Python Execution Trust Model}
+PyTV executes generated Python when \texttt{--run-py} or \texttt{--run-py-del} is used.
+Any Python embedded in \texttt{.pytv} or preamble files runs with the invoking user's permissions.
+Treat templates and preambles as trusted code.
 
-\subsection{Nested Submodules}
-There is currently no support for nested submodules in PyTV.
-However, with the given architecture,
-users can build a higher layer to support this feature,
-based on the direct hierarchy information of each module (\texttt{.inst} files).
+\subsection{Instantiation Scope}
+\texttt{<INST>} blocks support single-level instantiation extraction per module conversion.
+Nested \texttt{<INST>} blocks are rejected.
+Hierarchical assembly across modules should be implemented by a higher-level orchestrator using emitted \texttt{.inst} files.
 
+\subsection{Verilog Parsing Model}
+PyTV is line-oriented and template-oriented.
+It does not perform full HDL semantic checks.
+Backtick substitution and emitted text correctness remain the user's responsibility.
+
+\subsection{Feature-Specific Behavior}
+\begin{itemize}
+  \item With feature \texttt{inst} disabled, instantiation parsing/output is unavailable.
+  \item The optional \texttt{parameters} field in an \texttt{<INST>} block is stored in \texttt{.inst}
+  metadata but is not rendered into Verilog module instantiation text.
+\end{itemize}
+
+\subsection{License}
+PyTV is distributed under GPL-3.0-or-later.
+Downstream usage must comply with the GPL terms.

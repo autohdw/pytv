@@ -1,4 +1,4 @@
-The architecture (generation process) of PyTV is illustrated in Figure~\ref{fig:architecture}.
+The generation process of PyTV is illustrated in Figure~\ref{fig:architecture}.
 
 \begin{figure}[htbp]
   \centering
@@ -26,3 +26,31 @@ The architecture (generation process) of PyTV is illustrated in Figure~\ref{fig:
   \caption{Architecture of PyTV.}
   \label{fig:architecture}
 \end{figure}
+
+The pipeline is intentionally split into two stages:
+\begin{itemize}
+  \item \textbf{Template lowering}: \texttt{.pytv} is converted to a Python script (\texttt{.v.py}).
+  \item \textbf{Template execution}: the generated Python script is executed to emit target artifacts.
+\end{itemize}
+
+This separation has practical benefits:
+\begin{itemize}
+  \item The generated \texttt{.v.py} is inspectable for debugging.
+  \item Python runtime errors are surfaced with concrete script context.
+  \item Users may choose to stop after stage 1 for auditing or for downstream processing.
+\end{itemize}
+
+By default, running PyTV without execution options generates only \texttt{.v.py}.
+When Python execution is enabled (CLI options \texttt{-r}/\texttt{-R}),
+PyTV writes:
+\begin{itemize}
+  \item rendered Verilog to \texttt{.v}, and
+  \item instantiation metadata to \texttt{.inst}.
+\end{itemize}
+
+Output naming follows these rules:
+\begin{itemize}
+  \item If \texttt{-o/--output} is provided, that path is used as the Verilog output base.
+  \item Otherwise, input extension is replaced by \texttt{.v} (or \texttt{.v} is appended if none exists).
+  \item \texttt{.v.py} and \texttt{.inst} are derived from the chosen Verilog output base.
+\end{itemize}

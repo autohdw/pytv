@@ -9,5 +9,11 @@
 # macOS
 .DS_Store
 
+# LaTeX documentation
+/docs/*
+!/docs/sections
+!/docs/*.tex
+!/docs/*.bib
+
 # This Project
 /private

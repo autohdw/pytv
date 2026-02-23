@@ -1,12 +1,21 @@
-% Templated languages
-One method of auto generation of parameterized hardware relies on templated languages.
-AHDW \cite{zhao2023automatic} is a language building upon Verilog with custom syntax for parameterized hardware.
-% PyTV's advantage
+Parameterized hardware generation often benefits from templating.
+PyTV follows this direction by combining Python as the control language and Verilog as the generated target.
+Compared with custom DSL-only approaches such as AHDW \cite{zhao2023automatic},
+PyTV intentionally keeps Verilog visible and editable in the source template.
 
-Different from other domain-specific languages (DSLs) for hardware generation,
-PyTV provides users with more control over the hardware architecture and implementation details.
+The project provides two complementary interfaces:
+\begin{itemize}
+  \item A Rust crate (\texttt{pytv}) for integration into toolchains and generators.
+  \item A command-line binary (\texttt{pytv}) for direct file conversion.
+\end{itemize}
 
-% PyTV project information
-PyTV is open-source at \url{https://github.com/autohdw/pytv}
-and is distributed under the GPL-3.0 license.
-The Rust crate is available at \url{https://crates.io/crates/pytv}.
+At a high level, users write a \texttt{.pytv} file that mixes Verilog and Python directives.
+PyTV first converts it into a generated Python script, then optionally executes that script to emit:
+\begin{itemize}
+  \item a rendered Verilog file (\texttt{.v}), and
+  \item a module-instantiation metadata file (\texttt{.inst}) when instantiation blocks are used.
+\end{itemize}
+
+PyTV is open-source at \url{https://github.com/autohdw/pytv},
+published on crates.io at \url{https://crates.io/crates/pytv},
+and distributed under the GPL-3.0-or-later license.
