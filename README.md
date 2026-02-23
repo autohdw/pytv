@@ -8,6 +8,7 @@
 ## Package
 The package `pytv` is available on [crates.io](https://crates.io/crates/pytv).
 Documentation is available on [docs.rs](https://docs.rs/pytv).
+The full documentation PDF is available at [go.wqzhao.org/pytv-docs](https://go.wqzhao.org/pytv-docs).
 
 To use the package in a Rust project, run
 ```sh
